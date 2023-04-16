@@ -18,7 +18,7 @@ def read_world(filename):
             if line:
                 id, x, y = line.split(None)
 
-                rtn = rtn.append({"id": int(id),
+                rtn = rtn.append({"id": int(id)-1,
                                   "x": float(x),
                                   "y": float(y)}, ignore_index=True)
     return rtn
@@ -36,9 +36,9 @@ def read_data(filename):
                 if Type == "ODOMETRY":
                     rtn.append(basic_dict.copy())
                     basic_dict = {"Odometry": None, "Sensor": []}
-                    basic_dict["Odometry"] = {"r1":p1,"t":p2,"r2":p3}
+                    basic_dict["Odometry"] = {"r1":eval(p1),"t":eval(p2),"r2":eval(p3)}
                 elif Type == "SENSOR":
-                    basic_dict["Sensor"].append({"id":p1,"range":p2,"bearing":p3})
+                    basic_dict["Sensor"].append({"id":eval(p1)-1,"range":eval(p2),"bearing":eval(p3)})
                 else:
                     raise IOError("未知的数据类型")
     return rtn[1:]

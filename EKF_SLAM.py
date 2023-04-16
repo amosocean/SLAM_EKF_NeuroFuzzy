@@ -27,7 +27,7 @@ Flag_show_GUI = False
 
 for t in range(len(data)):
     mu, sigma = prediction_step(mu,sigma, data[t]["Odometry"],t==0)
-    mu, sigma, observedLandmarks = correction_step(mu,sigma,data[t]["Sensor"],Flag_show_GUI)
+    mu, sigma, observedLandmarks = correction_step(mu,sigma,data[t]["Sensor"],observedLandmarks)
     print("Current state vector:")
     print(f"mu=\n{mu}")
 
