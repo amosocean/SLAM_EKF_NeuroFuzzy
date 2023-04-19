@@ -65,7 +65,7 @@ def correction_step(mu, sigma, z, observedLandmarks):
             mu[3+landmarkID*2] = mu[0] + z_now["range"] * np.cos(z_now["bearing"] + mu[2])
             mu[3+landmarkID*2+1] = mu[1] + z_now["range"] * np.sin(z_now["bearing"] + mu[2])
             observedLandmarks[landmarkID] = True
-        Z[i*2:i*2+2] = z_now['range'],z_now["bearing"]
+        Z[i*2:i*2+2] = z_now['range'], z_now["bearing"]
         # Z[i,1] = z_now["bearing"]
 
         b = np.r_[mu[3+landmarkID*2] - mu[0], mu[3+landmarkID*2+1] - mu[1]]
