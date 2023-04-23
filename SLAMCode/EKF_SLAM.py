@@ -7,11 +7,11 @@ import os.path
 
 import numpy as np
 
-from tools import *
+from utils import *
 from rootFunctions import prediction_step,correction_step
-# load data
-landmarks = read_world("data/world.dat")     # 地标信息
-data = read_data("data/sensor_data.dat")
+# load sources
+landmarks = read_world("sources/world.dat")     # 地标信息
+data = read_data("sources/sensor_data.dat")
 plot_path = "output/"
 
 INF = 9999

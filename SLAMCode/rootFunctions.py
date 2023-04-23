@@ -5,14 +5,14 @@
 # @Author    :Kinddle
 import numpy as np
 
-from tools import *
+from utils import *
 
 
 def prediction_step(mu, sigma, u, isFirst):
     """
     Compute the new mu based on the noise-free (odometry-based) motion model
     Remember to normalize theta after the update
-    (hint: use the function normalize_angle available in tools)
+    (hint: use the function normalize_angle available in utils)
     :param mu:(2N+3) array. representing the state mean
     :param sigma: (2N+3,2N+3) array covariance matrix
     :param u: odometry reading (r1, t, r2) ,Use them to access the rotation and translation values

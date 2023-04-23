@@ -6,7 +6,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from tools import *
+from utils import *
 import gif
 
 def read_world(filename):
