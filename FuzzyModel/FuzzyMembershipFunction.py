@@ -8,7 +8,7 @@ import torch
 
 def GaussianMF(mean, sigma):
     def wrap(input):
-        input = input.unsqueeze(-1)
+        # input = input.unsqueeze(-1)
         return torch.exp(-(input - mean) ** 2 / (2 * sigma ** 2))
 
     return wrap
