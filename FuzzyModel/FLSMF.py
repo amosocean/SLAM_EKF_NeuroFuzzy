@@ -5,7 +5,6 @@
 # @Author    :Oliver
 
 import torch
-import torch.nn as nn
 
 Slope_Core_HardTanh = torch.nn.Hardtanh(0, 1)
 Slope_Core_Tanh = lambda x: (torch.nn.Tanh()((x * 2 - 1)) + 1) / 2
@@ -33,7 +32,7 @@ class TrapFunction(torch.nn.Module):
     def __init__(self, input_shape, abcd=None, FixedA=False, FixedB=False, FixedC=False, FixedD=False,
                  Slope_Core="HardTanh"):
         super().__init__()
-        trap_abcd, _ = torch.sort(torch.rand([4, *input_shape]), dim=0) if abcd is None else abcd
+        trap_abcd, _ = torch.sort(torch.rand([4, *input_shape]), dim=0) if abcd is None else (abcd,0)
         a, b, c, d = trap_abcd
 
         self.para_a = a if FixedA else torch.nn.Parameter(a)

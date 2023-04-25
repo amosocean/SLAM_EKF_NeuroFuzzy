@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 # import matplotlib.pyplot as plt
 # import csv
 
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class MyDataset(torch.utils.data.Dataset): 
     def __init__(self, tao=17,start_index=None,end_index=None): 
@@ -16,7 +16,7 @@ class MyDataset(torch.utils.data.Dataset):
         self.window_size=4
         self.start_index=start_index
         self.end_index=end_index
-        t_min = 18
+        t_min = tao+1
         t_max = end_index+self.window_size+1
         beta = 0.2
         gamma = 0.1
@@ -30,7 +30,7 @@ class MyDataset(torch.utils.data.Dataset):
             h = x[t-1] + (beta * x[t-tao-1] / (1 + np.power(x[t-tao-1], n))) - (gamma * x[t-1])
             # h = float("{:0.4f}".format(h))
             x.append(h)        
-        self.series=torch.Tensor(x)
+        self.series=torch.Tensor(x).to(device)
         print(self.series.size())
         
     def __getitem__(self, idx):
