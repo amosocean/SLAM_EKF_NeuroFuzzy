@@ -9,9 +9,11 @@ import torch
 Slope_Core_HardTanh = torch.nn.Hardtanh(0, 1)
 Slope_Core_Tanh = lambda x: (torch.nn.Tanh()((x * 2 - 1)) + 1) / 2
 Slope_Core_Sigmoid = lambda x: (torch.nn.Sigmoid()((x * 4 - 2)))
-Slope_Core_dict = {"HardTanh": Slope_Core_Tanh,
-                   "Tanh": Slope_Core_Tanh,
-                   "Sigmoid": Slope_Core_Sigmoid}
+Slope_Core_dict = {
+    # "HardTanh": Slope_Core_HardTanh,
+    "Tanh": Slope_Core_Tanh,
+    "Sigmoid": Slope_Core_Sigmoid
+}
 
 
 class GaussianFunction(torch.nn.Module):
@@ -30,9 +32,12 @@ class GaussianFunction(torch.nn.Module):
 
 class TrapFunction(torch.nn.Module):
     def __init__(self, input_shape, abcd=None, FixedA=False, FixedB=False, FixedC=False, FixedD=False,
-                 Slope_Core="HardTanh"):
+                 Slope_Core="Tanh"):
         super().__init__()
         trap_abcd, _ = torch.sort(torch.rand([4, *input_shape]), dim=0) if abcd is None else (abcd,0)
+
+        # trap_abcd= torch.rand([4, *input_shape]) if abcd is None else abcd
+
         a, b, c, d = trap_abcd
 
         self.para_a = a if FixedA else torch.nn.Parameter(a)

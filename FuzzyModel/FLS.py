@@ -45,29 +45,24 @@ class FuzzifierLayer(torch.nn.Module):
         input = input.unsqueeze(-2)
         extend_x = self.sample_func(input)
         extend_Mu = self.Fuzzifier_Function(extend_x - input)
-        return torch.stack([extend_x, extend_Mu])
+        return torch.stack([extend_x, extend_Mu]).unsqueeze(-1)
 
 class GaussianInferenceLayer(torch.nn.Module):
     def __init__(self, xDim, rule_num, gauss_mean=None, gauss_sigma=None, mask=None):
         super().__init__()
         self.rule_num = rule_num
-        # self.para_gauss_mean = torch.nn.Parameter(torch.rand([xDim, 1, rule_num])
-        #                                           if gauss_mean is None else gauss_mean)
-        # self.para_gauss_sigma = torch.nn.Parameter(torch.rand([xDim, 1, rule_num])
-        #                                            if gauss_sigma is None else gauss_sigma)
-        #
-        # self.mask = torch.ones([xDim, rule_num]) if mask is None else mask
         self.Ant_Function = GaussianFunction([xDim,rule_num])
-        # self.extend_one = torch.ones(rule_num)
 
 
     def forward(self, input):
-        extend_x, extend_Mu_A = input.unsqueeze(-1)
+        extend_x, extend_Mu_A = input
         extend_Mu_B = self.Ant_Function(extend_x)
-        Mu_Q, x_idx = torch.max(extend_Mu_A * extend_Mu_B, dim=-3, keepdim=True)
-        # gather_x = torch.gather(extend_x * self.extend_one,-3,x_idx)
-        gather_x = torch.gather(torch.repeat_interleave(extend_x,self.rule_num,-1),-3,x_idx)
-        return torch.stack([Mu_Q.squeeze(-3),gather_x.squeeze(-3)])
+        raw_Mu_Q = extend_Mu_A * extend_Mu_B
+        return torch.stack([extend_x * torch.ones(self.rule_num),raw_Mu_Q])
+        # Mu_Q, x_idx = torch.max(extend_Mu_A * extend_Mu_B, dim=-3, keepdim=True)
+        # # gather_x = torch.gather(extend_x * self.extend_one,-3,x_idx)
+        # gather_x = torch.gather(torch.repeat_interleave(extend_x,self.rule_num,-1),-3,x_idx)
+        # return torch.stack([Mu_Q.squeeze(-3),gather_x.squeeze(-3)])
 
 class TrapInferenceLayer(torch.nn.Module):
     def __init__(self,xDim, rule_num, abcd=None):
@@ -76,23 +71,29 @@ class TrapInferenceLayer(torch.nn.Module):
         self.Ant_Function = TrapFunction([xDim,rule_num],abcd)
 
     def forward(self,input):
-        extend_x, extend_Mu_A = input.unsqueeze(-1)
+        extend_x, extend_Mu_A = input
         extend_Mu_B = self.Ant_Function(extend_x)
-        Mu_Q, x_idx = torch.max(extend_Mu_A * extend_Mu_B, dim=-3, keepdim=True)
-        # gather_x = torch.gather(extend_x * self.extend_one,-3,x_idx)
-        gather_x = torch.gather(torch.repeat_interleave(extend_x, self.rule_num, -1), -3, x_idx)
-        return torch.stack([Mu_Q.squeeze(-3), gather_x.squeeze(-3)])
+        raw_Mu_Q = extend_Mu_A * extend_Mu_B
+        return torch.stack([extend_x * torch.ones(self.rule_num),raw_Mu_Q])
+
+        # Mu_Q, x_idx = torch.max(raw_Mu_Q, dim=-3, keepdim=True)
+        # gather_x = torch.gather(torch.repeat_interleave(extend_x, self.rule_num, -1), -3, x_idx)
+        # return torch.stack([Mu_Q.squeeze(-3), gather_x.squeeze(-3)])
 
 class HeightDefuzzifierLayer(torch.nn.Module):
     def __init__(self,rule_num, yDim=1,height=None):
         super().__init__()
+        self.rule_num = rule_num
         if height is None:
             self.para_height = torch.nn.Parameter(torch.rand([yDim,1, rule_num]))
         else:
             self.para_height = torch.nn.Parameter(height)
 
     def forward(self,input):
-        Mu_Q,x = input
+        extend_x,Mu_Q = input
+        Mu_Q, x_idx = torch.max(Mu_Q, dim=-3, keepdim=True)
+        gather_x = torch.gather(extend_x, -3, x_idx)
+
         Norm_Mu_Q = torch.prod(Mu_Q, dim=-2)
         return torch.sum(self.para_height * Norm_Mu_Q, dim=-1)/torch.sum(Norm_Mu_Q, dim=-1)
 
@@ -106,11 +107,14 @@ class TSDefuzzifierLayer(torch.nn.Module):
             self.para_C = torch.nn.Parameter(C)
 
     def forward(self, input):
-        Mu_Q, x = input.unsqueeze(-3)
+        extend_x,Mu_Q = input
+        Mu_Q, x_idx = torch.max(Mu_Q, dim=-3, keepdim=True)
+        gather_x = torch.gather(extend_x, -3, x_idx)
+
         C0 = self.para_C[:, 0]
         C_ = self.para_C[:, 1:]
         Norm_Mu_Q = torch.prod(Mu_Q, dim=-2)
-        y = C0 + torch.sum(C_*x,dim=-2)
+        y = C0 + torch.sum(C_*gather_x,dim=-2)
         return torch.sum(y * Norm_Mu_Q, dim=-1) / torch.sum(Norm_Mu_Q, dim=-1)
 
 

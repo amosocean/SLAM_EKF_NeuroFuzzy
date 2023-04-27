@@ -14,7 +14,7 @@ epoch_num = 100
 input_dim = 4
 batch_size = 5
 learning_rate = 10e-5
-# rules_num = 16
+rules_num = 16
 train_dataset=MyDataset(tao=38, start_index=1001,end_index=1500)
 train_loader = DataLoader(dataset=train_dataset,
                                     batch_size=batch_size,
@@ -33,9 +33,9 @@ test_loader = DataLoader(dataset=test_dataset,
 # customize your own model here:
 scale = max(max(test_dataset.series),max(train_dataset.series))
 # model = FuzzyLayer(4,16,x_scale=1/scale,y_scale=1/scale).to(device)
-model = FLSLayer(input_dim,16).to(device)
-model = TrapFLSLayer(input_dim,16).to(device)
-# model = TSFLSLayer(input_dim,16).to(device)
+# model = FLSLayer(input_dim,16).to(device)
+# model = TrapFLSLayer(input_dim,16).to(device)
+model = TSFLSLayer(input_dim,16).to(device)
 model.set_xy_offset_scale(x_scale=1/scale,y_scale=1/scale)
 
 
@@ -83,11 +83,15 @@ for epoch in range(epoch_num):
         test_loss = test_epoch_loss / (len(test_loader.dataset))
         draw_data_pred_x.update({epoch:[tmp_data_draw_real_x,tmp_data_draw_pred_x]})
         print("test loss:%f" % (test_loss))
-        draw_data_test.append([epoch,float(loss)])
+        draw_data_test.append([epoch,float(test_loss)])
     # .......
     # 根据条件对指定epoch的模型进行保存 将模型序列化到磁盘的pickle包
     # if 精度最高:
     #     torch.save(model.stat_dict(), f'{model_path}_{time_index}.pth')
+
+if True:
+    torch.save(model.state_dict(), "output/{}_TestLoss_{}.pt"
+               .format(model._get_name(),str(draw_data_test[-1][1]).replace(".", "_")))
 
 if True:
     from matplotlib import pyplot as plt
@@ -101,8 +105,9 @@ if True:
     plt.xlabel("Epoch")
     plt.ylabel("Loss(RMSE)")
     plt.legend()
+    plt.savefig("output/Fuzzy_loss.png")
     plt.show()
-
+if True:
     import gif
     @gif.frame
     def plot_(epoch):
@@ -120,3 +125,52 @@ if True:
         frame.append(of)
     frame[0].save("output/Fuzzy_pred_real.gif",save_all=True, loop=True, append_images=frame[1:],
                duration=10, disposal=2)
+
+if True:
+    import gif
+    from utils.FuzzyPlotSupport import *
+    Ant_F = model.Inference.Ant_Function
+    Height = model.Defuzzifier.para_height.detach()
+    sample = torch.linspace(0,1,100)[:,None,None]
+    draw_data = Ant_F(sample).detach()
+    @gif.frame
+    def plot_(rule):
+        ant = draw_data[:,:,rule]
+        height = Height[:,:,rule]
+        # real, pred = draw_data_pred_x[epoch]
+        fig = plt.figure(figsize=[10,5])
+
+
+        plt.subplot(1,2,1)
+        plt.title(f"Rule-{rule + 1}")
+        plt.plot(sample.squeeze(),ant)
+        plt.xlim(-0.05,1.05)
+        plt.ylim(0,1.5)
+        plt.legend(["x{}_Ant.".format(i) for i in range(input_dim)],loc="upper right")
+
+        plt.subplot(1,2,2)
+        plt.vlines(height,0,1,label="Con.")
+        plt.xlim(min(torch.min(Height), 0)-0.05,torch.max(Height)+0.05)
+        plt.ylim(0,1.25)
+        plt.legend()
+
+    frame = []
+    for k in range(rules_num):
+        of = plot_(k)
+        frame.append(of)
+    frame[0].save("output/Fuzzy_para.gif",save_all=True, loop=True, append_images=frame[1:],
+               duration=750, disposal=2)
+
+
+
+
+
+    # para_dict = dict(model.named_parameters())
+    # sigma = para_dict["Inference.Ant_Function.para_sigma"]
+    # mean = para_dict["Inference.Ant_Function.para_mean"]
+    # y =para_dict["Defuzzifier.para_height"]
+    # fig = Parameter_show_Gaussian(input_dim,rules_num,mean,sigma)
+    # plt.savefig("output/para_show.png")
+    # for name,para in model.named_parameters():
+    #     print(name)
+    #     print(para)
