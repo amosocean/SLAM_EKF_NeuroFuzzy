@@ -88,11 +88,11 @@ for epoch in range(epoch_num):
     # 根据条件对指定epoch的模型进行保存 将模型序列化到磁盘的pickle包
     # if 精度最高:
     #     torch.save(model.stat_dict(), f'{model_path}_{time_index}.pth')
-
+# 保存当前权重
 if True:
     torch.save(model.state_dict(), "output/{}_TestLoss_{}.pt"
                .format(model._get_name(),str(draw_data_test[-1][1]).replace(".", "_")))
-
+# 绘制loss变化图
 if True:
     from matplotlib import pyplot as plt
     plt.figure()
@@ -107,6 +107,7 @@ if True:
     plt.legend()
     plt.savefig("output/Fuzzy_loss.png")
     plt.show()
+# 绘制拟合效果动图
 if True:
     import gif
     @gif.frame
@@ -125,7 +126,7 @@ if True:
         frame.append(of)
     frame[0].save("output/Fuzzy_pred_real.gif",save_all=True, loop=True, append_images=frame[1:],
                duration=10, disposal=2)
-
+# 分析MF
 if True:
     import gif
     from utils.FuzzyPlotSupport import *
