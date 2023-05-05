@@ -54,4 +54,22 @@ def Parameter_show_Gaussian(xDim,ruleDim, Para_mean,Para_Sigma):
     plt.show()
     return fig
 
+def draw_loss(train_loss,test_loss):
+    fig = plt.figure()
+    train_x = np.array([i for i,j in train_loss.items()])
+    train_y = np.array([j.detach() for i,j in train_loss.items()])
+    test_x = np.array([i for i,j in test_loss.items()])
+    test_y = np.array([j.detach() for i,j in test_loss.items()])
+    plt.plot(train_x,train_y,label="Train")
+    plt.plot(test_x,test_y,label="Test")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss(RMSE)")
+    plt.legend()
+    # plt.savefig("output/Fuzzy_loss.png")
+    # plt.show()
+    # fig.show()
+    return fig
+
+
+
 

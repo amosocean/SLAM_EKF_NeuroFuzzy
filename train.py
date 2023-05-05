@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from utils.dataset import MyDataset
 from FuzzyModel.MyModel import FLSLayer,TSFLSLayer,TrapFLSLayer
 from FuzzyModel.Trainer import BasicTrainer,MSETrainer,RMSETrainer
-
+from utils.FuzzyPlotSupport import draw_loss
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 epoch_num = 100
@@ -51,10 +51,10 @@ scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
 
 Train = RMSETrainer(model=model,loader_train=train_loader,loader_test=test_loader,optimizer=optimizer,lrScheduler=scheduler)
 
-train_loss,test_loss = Train.run(100)
+train_loss,test_loss = Train.run(10,1)
 
-
-
+fig = draw_loss(train_loss,test_loss)
+fig.show()
 
 
 
