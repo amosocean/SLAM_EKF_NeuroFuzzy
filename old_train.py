@@ -129,7 +129,6 @@ if True:
 # 分析MF
 if True:
     import gif
-    from utils.FuzzyPlotSupport import *
     Ant_F = model.Inference.Ant_Function
     Height = model.Defuzzifier.para_height.detach()
     sample = torch.linspace(0,1,100)[:,None,None]

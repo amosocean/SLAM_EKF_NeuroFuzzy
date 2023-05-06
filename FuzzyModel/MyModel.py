@@ -6,10 +6,20 @@
 import torch
 from FuzzyModel.FLS import *
 from utils.Decorator import *
-@scale()
-class FLSLayer(torch.nn.Module):
-    def __init__(self,xDim,rule_num):
+
+class BasicModel(torch.nn.Module):
+    def __init__(self,xDim,rule_num,yDim=1):
         super().__init__()
+        self.xDim=xDim
+        self.rule_num = rule_num
+        self.yDim=yDim
+    def forward(self,input):
+        return input
+
+@scale()
+class FLSLayer(BasicModel):
+    def __init__(self,xDim,rule_num):
+        super().__init__(xDim,rule_num)
         self.Fuzzifier = FuzzifierLayer(xDim)
         self.Inference = GaussianInferenceLayer(xDim,rule_num)
         self.Defuzzifier = HeightDefuzzifierLayer(rule_num)
@@ -22,9 +32,9 @@ class FLSLayer(torch.nn.Module):
         return input
 
 @scale()
-class TSFLSLayer(torch.nn.Module):
+class TSFLSLayer(BasicModel):
     def __init__(self,xDim,rule_num):
-        super().__init__()
+        super().__init__(xDim,rule_num)
         self.Fuzzifier = FuzzifierLayer(xDim)
         self.Inference = GaussianInferenceLayer(xDim,rule_num)
         self.Defuzzifier = TSDefuzzifierLayer(xDim,rule_num)
@@ -37,9 +47,9 @@ class TSFLSLayer(torch.nn.Module):
         return input
 
 @scale()
-class TrapFLSLayer(torch.nn.Module):
+class TrapFLSLayer(BasicModel):
     def __init__(self,xDim,rule_num):
-        super().__init__()
+        super().__init__(xDim,rule_num)
         self.Fuzzifier = FuzzifierLayer(xDim)
         self.Inference = TrapInferenceLayer(xDim,rule_num)
         self.Defuzzifier = HeightDefuzzifierLayer(rule_num)

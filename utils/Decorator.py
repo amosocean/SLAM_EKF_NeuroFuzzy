@@ -19,9 +19,9 @@ def scale(x_offset_=0, x_scale_=1, y_offset_=0, y_scale_=1):
             self.y_scale = y_scale if y_scale is not None else self.y_scale
 
         def pack_forward(self, input):
-            input = input * self.x_scale + self.x_offset
+            input = (input + self.x_offset) * self.x_scale
             rtn = raw_forward(self, input)
-            return rtn * self.y_scale + self.y_offset
+            return rtn / self.y_scale - self.y_offset
 
         cls.forward = pack_forward
         cls.set_xy_offset_scale = set_xy_offset_scale
