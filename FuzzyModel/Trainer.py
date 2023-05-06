@@ -10,7 +10,6 @@ import torch.nn.functional as F
 from matplotlib import pyplot as plt
 import numpy as np
 import gif
-from utils.logger import rootlogger
 
 
 class BasicTrainer(object):
@@ -19,7 +18,6 @@ class BasicTrainer(object):
     def __init__(self, model, loader_train, loader_test, optimizer, lrScheduler,logName=None, lossFunc=None):
         if logName is None:
             logName = "default_logger"
-            rootlogger("default_logger")
         self.model = model
         self.loader_train = loader_train
         self.loader_test = loader_test

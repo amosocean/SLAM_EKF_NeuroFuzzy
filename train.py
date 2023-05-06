@@ -10,8 +10,8 @@ import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import DataLoader
 from utils.dataset import MyDataset
 from utils.logger import rootlogger
-from FuzzyModel.MyModel import FLSLayer, TSFLSLayer, TrapFLSLayer
-from FuzzyModel.Trainer import BasicTrainer, MSETrainer, RMSETrainer
+from FuzzyModel import *
+from FuzzyModel.MyModel import *
 from utils.FuzzyPlotSupport import draw_loss
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -38,17 +38,20 @@ test_loader = DataLoader(dataset=test_dataset,
 
 # customize your own model here:
 scale = max(max(test_dataset.series), max(train_dataset.series))
-model = FLSLayer(input_dim, 16).to(device)
+# model = TrapFLSLayer(input_dim, 16).to(device)
+model = StrictlyTrapFLSLayer(input_dim, 16).to(device)
+# model = FLSLayer(input_dim, 16).to(device)
+# model = TwoHalfTrapFLSLayer(input_dim, 16).to(device)
 model.set_xy_offset_scale(x_scale=1 / scale, y_scale=1 / scale)
 
 # #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20, 50], gamma=0.5)
+scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20, 50,70], gamma=0.5)
 rootlogger('Train')
 Train = RMSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                     lrScheduler=scheduler, logName="Train")
 
-train_loss, test_loss = Train.run(10, 1, True)
+train_loss, test_loss = Train.run(epoch_num, 2, True)
 
 # log.debug('debug')
 # log.info('info')

@@ -19,7 +19,8 @@ class rootlogger(object):
         log_filename = Path_LogDir("{}_LOG_{}.log".format(logName,getStrTime()), getStrTime(True, False))
         self.add_file_Handler(log_filename)
 
-
+    def silence(self):
+        self.log.setLevel(100)
     def add_stream_Handler(self,stream=sys.stderr, level="WARNING"):
         handler = logging.StreamHandler(stream)
         handler.setLevel(level)

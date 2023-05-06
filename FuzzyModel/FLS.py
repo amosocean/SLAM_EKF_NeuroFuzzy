@@ -4,7 +4,7 @@
 # @Time      :2023/4/25 3:34 PM
 # @Author    :Oliver
 
-from FuzzyModel.FLSMF import GaussianFunction, TrapFunction
+from FuzzyModel.FLSMF import *
 import torch
 
 
@@ -85,6 +85,14 @@ class TrapInferenceLayer(BasicInferenceLayer):
         super().__init__(xDim, rule_num)
         self.Ant_Function = TrapFunction([xDim, rule_num], abcd)
 
+class HalfTrapInferenceLayer(BasicInferenceLayer):
+    def __init__(self,xDim,rule_num,ab=None):
+        super().__init__(xDim,rule_num)
+        self.Ant_Function = HalfTrap([xDim, rule_num], ab)
+class StrictlyTrapInferenceLayer(BasicInferenceLayer):
+    def __init__(self,xDim,rule_num,center=None, slope_up=None, topPlat_len=None,  slope_down=None):
+        super().__init__(xDim,rule_num)
+        self.Ant_Function = StrictlyTrapFunction([xDim, rule_num], center, slope_up, topPlat_len,  slope_down)
 
 class HeightDefuzzifierLayer(torch.nn.Module):
     def __init__(self, rule_num, yDim=1, height=None):
