@@ -6,7 +6,9 @@
 
 import torch
 import re
-from config import device
+
+from .config import device
+
 
 Slope_Core_HardTanh = torch.nn.Hardtanh(0, 1)
 Slope_Core_Tanh = lambda x: (torch.nn.Tanh()((x * 2 - 1)) + 1) / 2

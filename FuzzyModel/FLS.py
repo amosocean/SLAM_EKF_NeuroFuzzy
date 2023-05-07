@@ -6,8 +6,9 @@
 
 from FuzzyModel.FLSMF import *
 import torch
-from config import device
-torch.set_default_dtype(torch.double)
+
+from .config import device
+
 
 
 class BasicInferenceLayer(torch.nn.Module):
