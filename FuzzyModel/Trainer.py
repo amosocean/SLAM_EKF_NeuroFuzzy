@@ -92,10 +92,12 @@ class BasicTrainer(object):
         test_losses = {}
         for epoch in range(epoch_num):
             train_loss = self.train()
+            train_loss=train_loss.detach().cpu().numpy()
             train_losses.update({epoch: train_loss})
             show_str = f"epoch:{epoch + 1},train_loss:{train_loss}"
             if (epoch + 1) % div == 0:
                 test_loss = self.eval()
+                test_loss=test_loss.detach().cpu().numpy()
                 test_losses.update({epoch: test_loss})
                 show_str = f"epoch:{epoch + 1},train_loss:{train_loss},test_loss:{test_loss}"
             print("\r"+show_str, end="")
@@ -112,9 +114,9 @@ class BasicTrainer(object):
     def drawLossFig(train_loss, test_loss):
         fig = plt.figure()
         train_x = np.array([i for i, j in train_loss.items()])
-        train_y = np.array([j.detach() for i, j in train_loss.items()])
+        train_y = np.array([j for i, j in train_loss.items()])
         test_x = np.array([i for i, j in test_loss.items()])
-        test_y = np.array([j.detach() for i, j in test_loss.items()])
+        test_y = np.array([j for i, j in test_loss.items()])
         plt.plot(train_x, train_y, label="Train")
         plt.plot(test_x, test_y, label="Test")
         plt.xlabel("Epoch")

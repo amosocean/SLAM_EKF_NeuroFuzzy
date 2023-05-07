@@ -77,7 +77,7 @@ if __name__ == '__main__':
     fig = plt.figure()
     data_draw1 = TFK1.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
-    data_draw4 = np.array(Fuzzy_Est_tensor[:, [0, 3, 6]].detach())
+    data_draw4 = np.array(Fuzzy_Est_tensor[:, [0, 3, 6]].detach().cpu())
     # data_draw2 = Xkf[[0, 3, 6], :].T
     # data_draw2 = recordsA["EstimateRecorder"].iloc[:, [0, 3, 6]].to_numpy()
     # data_draw3 = recordsB["EstimateRecorder"].iloc[:, [0, 3, 6]]
