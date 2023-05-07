@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import DataLoader
-from utils.dataset import MyDataset
+from utils.dataset import Mackey_Glass_Dataset
 from FuzzyModel.MyModel import FLSLayer,TSFLSLayer,TrapFLSLayer
 from FuzzyModel.Trainer import BasicTrainer,MSETrainer,RMSETrainer
 from utils.FuzzyPlotSupport import draw_loss

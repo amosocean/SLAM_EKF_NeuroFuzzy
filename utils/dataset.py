@@ -11,7 +11,7 @@ Mackey-Glass time series
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-class MyDataset(torch.utils.data.Dataset):
+class Mackey_Glass_Dataset(torch.utils.data.Dataset):
     def __init__(self, tao=17, start_index=None, end_index=None):
         # =============================================================================
         # Define hyperparameters
@@ -48,8 +48,10 @@ class MyDataset(torch.utils.data.Dataset):
         return self.end_index - self.start_index + 1
 
 
+
+
 if __name__ == "__main__":
-    train_dataset = MyDataset(start_index=1001, end_index=1504)
+    train_dataset = Mackey_Glass_Dataset(start_index=1001, end_index=1504)
     train_loader = DataLoader(dataset=train_dataset,
                               batch_size=1,
                               shuffle=False,

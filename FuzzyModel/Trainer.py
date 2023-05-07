@@ -61,7 +61,7 @@ class BasicTrainer(object):
             sample = batch[0].to(self.device)
             gts = batch[1].to(self.device)
             batch_len = sample.shape[0]
-            pred = self.model(sample).squeeze(-1)
+            pred = self.model(sample)
             loss = F.mse_loss(pred, gts)
             if not ifEval:
                 self.optimizer.zero_grad()  # pytorch会积累梯度，在优化每个batch的权重的梯度之前将之前计算出的每个权重的梯度置0

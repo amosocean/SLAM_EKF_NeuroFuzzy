@@ -7,3 +7,4 @@
 from .Trainer import BasicTrainer,RMSETrainer,MSETrainer
 from .MyModel import *
 alphabet = "".join([chr(i) for i in list(range(65, 90)) + list(range(97, 123))])
+

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import DataLoader
-from utils.dataset import MyDataset
+from utils.dataset import Mackey_Glass_Dataset
 from utils.logger import rootlogger
 from FuzzyModel import *
 from FuzzyModel.MyModel import *
@@ -22,14 +22,14 @@ batch_size = 5
 learning_rate = 10e-5
 rules_num = 16
 
-train_dataset = MyDataset(tao=38, start_index=1001, end_index=1500)
+train_dataset = Mackey_Glass_Dataset(tao=38, start_index=1001, end_index=1500)
 train_loader = DataLoader(dataset=train_dataset,
                           batch_size=batch_size,
                           shuffle=True,
                           num_workers=0,
                           pin_memory=False)
 
-test_dataset = MyDataset(tao=38, start_index=1501, end_index=1995)
+test_dataset = Mackey_Glass_Dataset(tao=38, start_index=1501, end_index=1995)
 test_loader = DataLoader(dataset=test_dataset,
                          batch_size=1,
                          shuffle=False,

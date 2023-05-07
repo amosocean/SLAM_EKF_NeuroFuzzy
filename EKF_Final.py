@@ -87,21 +87,21 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     batch_size = 5
-    time_dim = 10
+    time_dim = 5
     Test = Norm_layer([time_dim])
-    tensor_real_data = torch.tensor((TFK1.get_real_data_all().iloc[:,:9].to_numpy())).T
+    tensor_real_data_train = torch.tensor((TFK1.get_real_data_all().iloc[:, :9].to_numpy())).T
     tensor_real_data_test = torch.tensor((TFK2.get_real_data_all().iloc[:,:9].to_numpy())).T
 
-    dataset = [(tensor_real_data[:,i:i+time_dim],tensor_real_data[:,i+time_dim])
-               for i in range(tensor_real_data.shape[1]-time_dim)]
+    dataset_train = [(tensor_real_data_train[:, i:i + time_dim], tensor_real_data_train[:, i + time_dim])
+                     for i in range(tensor_real_data_train.shape[1] - time_dim)]
     dataset_test = [(tensor_real_data_test[:,i:i+time_dim],tensor_real_data_test[:,i+time_dim])
                     for i in range(tensor_real_data_test.shape[1]-time_dim)]
-    train_loader = DataLoader(dataset=dataset,
+    train_loader = DataLoader(dataset=dataset_train,
                           batch_size=batch_size,
                           shuffle=True,
                           num_workers=0,
                           pin_memory=False)
-    test_loader = DataLoader(dataset=dataset,
+    test_loader = DataLoader(dataset=dataset_test,
                              batch_size=1,
                              shuffle=False,
                              num_workers=0,
