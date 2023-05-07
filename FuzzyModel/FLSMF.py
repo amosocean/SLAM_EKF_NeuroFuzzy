@@ -6,6 +6,7 @@
 
 import torch
 import re
+from FuzzyModel import device
 
 Slope_Core_HardTanh = torch.nn.Hardtanh(0, 1)
 Slope_Core_Tanh = lambda x: (torch.nn.Tanh()((x * 2 - 1)) + 1) / 2
@@ -40,7 +41,7 @@ class BasicFunction(torch.nn.Module):
                     Fixed_dict.update({k: False})
         for k in value_dict.keys():
             para_name = k
-            para_value = torch.rand(input_shape) if value_dict[k] is None else value_dict[k]
+            para_value = torch.rand(input_shape, device=device) if value_dict[k] is None else value_dict[k]
             para_Fixed = Fixed_dict[k]
             self.__setattr__("para_" + para_name, para_value if para_Fixed else torch.nn.Parameter(para_value))
 
@@ -60,7 +61,7 @@ class GaussianFunction(BasicFunction):
 class TrapFunction(BasicFunction):
     def __init__(self, input_shape, abcd=None, FixedA=False, FixedB=False, FixedC=False, FixedD=False,
                  Slope_Core="Tanh"):
-        trap_abcd, _ = torch.sort(torch.rand([4, *input_shape]), dim=0) if abcd is None else (abcd, 0)
+        trap_abcd, _ = torch.sort(torch.rand([4, *input_shape],device=device), dim=0) if abcd is None else (abcd, 0)
         a, b, c, d = trap_abcd
         super().__init__(input_shape, A=a, B=b, C=c, D=d,
                          FixedA=False, FixedB=False, FixedC=False, FixedD=False)
@@ -76,7 +77,7 @@ class HalfTrap(BasicFunction):
     def __init__(self, input_shape, ab=None, FixedA=False, FixedB=False,
                  Slope_Core="Tanh"):
 
-        trap_abcd = torch.rand([2, *input_shape]) if ab is None else ab
+        trap_abcd = torch.rand([2, *input_shape],device=device) if ab is None else ab
         a, b = trap_abcd
         super().__init__(input_shape,A=a,B=b,FixedA=False, FixedB=False)
 

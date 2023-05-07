@@ -14,7 +14,7 @@ class BasicModel(torch.nn.Module):
         self.rule_num = rule_num
         self.yDim=yDim
     def quick_eval(self,*args):
-        return self(torch.tensor(args))
+        return self(torch.tensor(args,device=device))
     def forward(self,x):
         return x
 
@@ -27,7 +27,7 @@ class BasicTimeSeriesModel(torch.nn.Module):
         self.yDim=yDim
         self.yTimeDim = yTimeDim
     def quick_eval(self,*args):
-        return self(torch.tensor(args))
+        return self(torch.tensor(args,device=device))
     def forward(self,x):
         return x
 
@@ -111,20 +111,22 @@ class TwoHalfTrapFLSLayer(BasicModel):
 class AdoptTimeFLSLayer(BasicTimeSeriesModel):
     def __init__(self,xDim,xTimeDim,rule_num,yDim=1,yTimeDim=1):
         super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
-        self.Norm = Norm_layer(xTimeDim)
+        self.Norm = FixNorm_layer(xTimeDim)
         # self.AlterNorm = Norm_layer(yTimeDim)
         self.FLS_List=[]
         for i in range(xDim):
             self.FLS_List.append(FLSLayer(xTimeDim,rule_num))
 
     def forward(self,x):
-        x_norm = self.Norm(x)
-        gama, beta = self.Norm.parameters()
+        x_norm, mean,var = self.Norm(x)
+        # var, mean = (torch.var_mean(x, dim=-1))
+
+        # gama, beta = self.Norm.parameters()
         xs = torch.split(x_norm,1,dim=-2)
         ys = []
         for i in range(self.xDim):
             ys.append(self.FLS_List[i](xs[i].squeeze(-2)))
         rtn = torch.stack(ys,dim=-2)
-        var, mean = (torch.var_mean(x, dim=-1))
-        return rtn * var.unsqueeze(-1) + mean.unsqueeze(-1)
+
+        return rtn * var + mean
 

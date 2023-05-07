@@ -10,10 +10,10 @@ import torch.nn.functional as F
 from matplotlib import pyplot as plt
 import numpy as np
 import gif
-
+from config import device
 
 class BasicTrainer(object):
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = device
 
     def __init__(self, model, loader_train, loader_test, optimizer, lrScheduler,logName=None, lossFunc=None):
         if logName is None:

@@ -6,7 +6,7 @@
 
 from FuzzyModel.FLSMF import *
 import torch
-# torch.set_default_tensor_type(torch.DoubleTensor)
+from FuzzyModel import device
 torch.set_default_dtype(torch.double)
 
 
@@ -63,7 +63,8 @@ class FuzzifierLayer(torch.nn.Module):
                                                            dim=-2)
 
         if Fuzzifier_Function is None:
-            self.Fuzzifier_Function = GaussianFunction([xDim], torch.zeros(xDim), torch.ones(xDim), FixedMean=True,
+            self.Fuzzifier_Function = GaussianFunction([xDim], torch.zeros(xDim,device=device),
+                                                       torch.ones(xDimdevice=device), FixedMean=True,
                                                        FixedSigma=False)
 
     def forward(self, input):
@@ -101,7 +102,7 @@ class HeightDefuzzifierLayer(torch.nn.Module):
         super().__init__()
         self.rule_num = rule_num
         if height is None:
-            self.para_height = torch.nn.Parameter(torch.rand([yDim, 1, rule_num]))
+            self.para_height = torch.nn.Parameter(torch.rand([yDim, 1, rule_num],device=device))
         else:
             self.para_height = torch.nn.Parameter(height)
 
@@ -118,7 +119,7 @@ class TSDefuzzifierLayer(torch.nn.Module):
     def __init__(self, xDim, rule_num, yDim=1, C=None):
         super().__init__()
         if C is None:
-            self.para_C = torch.nn.Parameter(torch.rand([yDim, xDim + 1, rule_num]))
+            self.para_C = torch.nn.Parameter(torch.rand([yDim, xDim + 1, rule_num],device=device))
         else:
             self.para_C = torch.nn.Parameter(C)
 
@@ -133,7 +134,7 @@ class TSDefuzzifierLayer(torch.nn.Module):
         y = C0 + torch.sum(C_ * gather_x, dim=-2)
         return torch.sum(y * Norm_Mu_Q, dim=-1) / torch.sum(Norm_Mu_Q, dim=-1)
 
-class Norm_layer(torch.nn.Module):
+class FormalNorm_layer(torch.nn.Module):
     def __init__(self,shape):
         super().__init__()
         self.Layer_Norm = torch.nn.LayerNorm(shape)
@@ -141,10 +142,20 @@ class Norm_layer(torch.nn.Module):
     def forward(self,x):
         return self.Layer_Norm(x)
 
+class FixNorm_layer(torch.nn.Module):
+    def __init__(self,shape):
+        super().__init__()
+        self.Gama = torch.nn.Parameter(torch.ones(shape,device=device))
+        self.Beta = torch.nn.Parameter(torch.zeros(shape,device=device))
+    def forward(self, x):
+        var, mean = (torch.var_mean(x, dim=-1))
+        return ((x-mean.unsqueeze(-1))/torch.sqrt(var.unsqueeze(-1)+1e-05)) * self.Gama + self.Beta,\
+            mean.unsqueeze(-1),var.unsqueeze(-1)
+
 
 if __name__ == '__main__':
     # from FLSMF import GaussianFunction, TrapFunction
-    x = torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]) / 5
+    x = torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]],device=device) / 5
     FF = FuzzifierLayer(4, 10)
     GI = GaussianInferenceLayer(4, 16)
     TSD = TSDefuzzifierLayer(4, 16)

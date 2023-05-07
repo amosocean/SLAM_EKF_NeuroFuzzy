@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
 if __name__ == '__main__':
 
-    from FuzzyModel.FLS import Norm_layer
+    from FuzzyModel.FLS import FormalNorm_layer
     from FuzzyModel.MyModel import AdoptTimeFLSLayer
     import torch
     from torch.utils.data import DataLoader
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     batch_size = 5
     time_dim = 5
-    Test = Norm_layer([time_dim])
+    Test = FormalNorm_layer([time_dim])
     tensor_real_data_train = torch.tensor((TFK1.get_real_data_all().iloc[:, :9].to_numpy())).T
     tensor_real_data_test = torch.tensor((TFK2.get_real_data_all().iloc[:,:9].to_numpy())).T
 

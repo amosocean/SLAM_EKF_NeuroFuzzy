@@ -78,7 +78,7 @@ from PyRadarTrack.Model.FilterModel import IMMFilterModel, BasicEKFModel
 
 if __name__ == '__main__':
 
-    from FuzzyModel.FLS import Norm_layer
+    from FuzzyModel.FLS import FormalNorm_layer
     from FuzzyModel.MyModel import AdoptTimeFLSLayer
     import torch
     from torch.utils.data import DataLoader
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     batch_size = 5
     time_dim = 5
-    Test = Norm_layer([time_dim])
+    Test = FormalNorm_layer([time_dim])
     train_loader = DataLoader(dataset=TFK1,
                               batch_size=batch_size,
                               shuffle=True,
