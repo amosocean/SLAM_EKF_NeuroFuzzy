@@ -21,7 +21,7 @@ class BasicInferenceLayer(torch.nn.Module):
         extend_x, extend_Mu_A = input
         extend_Mu_B = self.Ant_Function(extend_x)
         raw_Mu_Q = extend_Mu_A * extend_Mu_B
-        return torch.stack([extend_x * torch.ones(self.rule_num), raw_Mu_Q])
+        return torch.stack([extend_x * torch.ones(self.rule_num).to(device), raw_Mu_Q])
 
     def getAntFunc(self):
         return self.Ant_Function
