@@ -10,8 +10,7 @@ import torch
 WORK_ROOT = os.getcwd()
 OUTPUT_ROOT_DIR = os.path.join(WORK_ROOT,"output/")
 LOG_ROOT_DIR = os.path.join(WORK_ROOT,"logs/")
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device=torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def Path_OutputDir(filename,leaf_dir=""):
     dir = os.path.join(OUTPUT_ROOT_DIR, leaf_dir)
