@@ -86,8 +86,8 @@ if __name__ == '__main__':
     from utils.logger import rootlogger
     from FuzzyModel.Trainer import MSETrainer
     from utils.Track_Generate import Random_Track_Generate
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    from config import device as DEVICE
+    device = DEVICE
     Simulate_time = 500
     TFK1 = Random_Track_Generate(Simulate_time)
     TFK2 = Random_Track_Generate(Simulate_time)

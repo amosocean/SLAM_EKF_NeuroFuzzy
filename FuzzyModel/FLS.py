@@ -6,7 +6,7 @@
 
 from FuzzyModel.FLSMF import *
 import torch
-from FuzzyModel import device
+from config import device
 torch.set_default_dtype(torch.double)
 
 
@@ -64,7 +64,7 @@ class FuzzifierLayer(torch.nn.Module):
 
         if Fuzzifier_Function is None:
             self.Fuzzifier_Function = GaussianFunction([xDim], torch.zeros(xDim,device=device),
-                                                       torch.ones(xDimdevice=device), FixedMean=True,
+                                                       torch.ones(xDim,device=device), FixedMean=True,
                                                        FixedSigma=False)
 
     def forward(self, input):
