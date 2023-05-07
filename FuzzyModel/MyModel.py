@@ -6,7 +6,7 @@
 import torch
 from FuzzyModel.FLS import *
 from utils.Decorator import *
-
+from .config import device
 class BasicModel(torch.nn.Module):
     def __init__(self,xDim,rule_num,yDim=1):
         super().__init__()
@@ -120,8 +120,6 @@ class AdoptTimeFLSLayer(BasicTimeSeriesModel):
     def forward(self,x):
         x_norm, mean,var = self.Norm(x)
         # var, mean = (torch.var_mean(x, dim=-1))
-
-        # gama, beta = self.Norm.parameters()
         xs = torch.split(x_norm,1,dim=-2)
         ys = []
         for i in range(self.xDim):
@@ -129,4 +127,13 @@ class AdoptTimeFLSLayer(BasicTimeSeriesModel):
         rtn = torch.stack(ys,dim=-2)
 
         return rtn * var + mean
+
+
+class DifferenceLayer(BasicTimeSeriesModel):
+    def __init__(self, xDim, xTimeDim, rule_num, yDim=1, yTimeDim=1):
+        super().__init__(xDim, xTimeDim, rule_num, yDim, yTimeDim)
+
+    def forward(self, x):
+        pass
+
 

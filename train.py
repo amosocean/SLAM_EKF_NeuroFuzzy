@@ -49,7 +49,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20, 50,70], gamma=0.5)
 rootlogger('Train')
 Train = RMSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
-                    lrScheduler=scheduler)
+                    lrScheduler=scheduler,logName="Train")
 
 train_loss, test_loss = Train.run(epoch_num, 2, True)
 
