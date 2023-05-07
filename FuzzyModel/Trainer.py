@@ -18,13 +18,17 @@ class BasicTrainer(object):
     def __init__(self, model, loader_train, loader_test, optimizer, lrScheduler,logName=None, lossFunc=None):
         if logName is None:
             logName = "default_logger"
+            self.log = logging.getLogger(logName)
+            self.log.setLevel("INFO")
+            self.log.info("Trainer ready: logged by default_logger.")
+        else:
+            self.log = logging.getLogger(logName)
+            self.log.info(f"Trainer ready: logged by {logName}.")
         self.model = model
         self.loader_train = loader_train
         self.loader_test = loader_test
         self.optimizer = optimizer
         self.lrScheduler = lrScheduler
-        self.log = logging.getLogger(logName)
-        self.log.info("Trainer ready")
         # self.lossFunc = lossFunc if lossFunc is not None else lambda pred,gts:torch.sqrt(F.mse_loss(pred, gts))
         self.reset()
         self.tmp_save_data_pred = []

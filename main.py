@@ -26,7 +26,7 @@ div_point = 4000
 x1 = torch.rand(sample_len)*100
 x2 = torch.rand(sample_len)*100
 x = torch.stack([x1,x2])
-y = ((x1+x2))**2
+y = (3*x1+5*x2)
 dataset = [[torch.stack([x1[i],x2[i]]),y[i]] for i in range(sample_len)]
 
 train_dataset=dataset[:div_point]

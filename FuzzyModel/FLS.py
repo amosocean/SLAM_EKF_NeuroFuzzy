@@ -6,6 +6,8 @@
 
 from FuzzyModel.FLSMF import *
 import torch
+# torch.set_default_tensor_type(torch.DoubleTensor)
+torch.set_default_dtype(torch.double)
 
 
 class BasicInferenceLayer(torch.nn.Module):
@@ -130,6 +132,14 @@ class TSDefuzzifierLayer(torch.nn.Module):
         Norm_Mu_Q = torch.prod(Mu_Q, dim=-2)
         y = C0 + torch.sum(C_ * gather_x, dim=-2)
         return torch.sum(y * Norm_Mu_Q, dim=-1) / torch.sum(Norm_Mu_Q, dim=-1)
+
+class Norm_layer(torch.nn.Module):
+    def __init__(self,shape):
+        super().__init__()
+        self.Layer_Norm = torch.nn.LayerNorm(shape)
+
+    def forward(self,x):
+        return self.Layer_Norm(x)
 
 
 if __name__ == '__main__':
