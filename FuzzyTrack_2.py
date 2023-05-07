@@ -14,7 +14,7 @@ from PyRadarTrack.Model.FilterModel import IMMFilterModel, BasicEKFModel
 if __name__ == '__main__':
 
     from FuzzyModel.FLS import FormalNorm_layer
-    from FuzzyModel.MyModel import AdoptTimeFLSLayer
+    from FuzzyModel.MyModel import AdoptTimeFLSLayer,AdoptTimeFLSLayer_Dense
     import torch
     from torch.utils.data import DataLoader
     import torch.optim.lr_scheduler as lr_scheduler
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                              num_workers=0,
                              pin_memory=False)
     # A = Test(tensor_real_data[:time_dim])
-    model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
+    model = AdoptTimeFLSLayer_Dense(9, time_dim, 64, 9, 1).to(device=device)
     epoch_num = 10
     learning_rate = 10e-1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
