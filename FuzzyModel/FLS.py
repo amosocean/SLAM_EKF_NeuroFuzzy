@@ -65,7 +65,7 @@ class FuzzifierLayer(torch.nn.Module):
 
         if Fuzzifier_Function is None:
             self.Fuzzifier_Function = GaussianFunction([xDim], torch.zeros(xDim,device=device),
-                                                       torch.ones(xDim,device=device), FixedMean=True,
+                                                       torch.ones(xDimdevice=device), FixedMean=True,
                                                        FixedSigma=False)
 
     def forward(self, input):
