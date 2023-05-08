@@ -20,20 +20,24 @@ if __name__ == '__main__':
     import torch.optim.lr_scheduler as lr_scheduler
     from utils.logger import rootlogger
     from FuzzyModel.Trainer import MSETrainer
-    from utils.Track_Generate import Random_Track_Generate
+    from utils.Track_Generate import Random_Track_Dataset_Generate
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
-    TFK1 = Random_Track_Generate(Simulate_time,seed=666)
-    TFK2 = Random_Track_Generate(Simulate_time,seed=667)
+    TFK1 = Random_Track_Dataset_Generate(Simulate_time,seed=666)
+    TFK2 = Random_Track_Dataset_Generate(Simulate_time,seed=667)
     # region 规划初始点和初始速度
     X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
     TFK1.gen_randomTrack(X0)
     TFK2.gen_randomTrack(X1)
     # endregion
+    
+    #### 数据集加入噪声
+    TFK1_noise=TFK1.add_noise()
+    ####
 
-    batch_size = 20
+    batch_size = 20000
     time_dim = 5
     Test = FormalNorm_layer([time_dim])
     train_loader = DataLoader(dataset=TFK1,
@@ -48,17 +52,17 @@ if __name__ == '__main__':
                              pin_memory=False)
     # A = Test(tensor_real_data[:time_dim])
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
-    model = PackingAdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
+    model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     print(model.parameters)
-    epoch_num = 50
-    learning_rate = 10e-1
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[8, 50, 70], gamma=0.5)
+    epoch_num = 1000
+    learning_rate = 0.01
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,200,400,600], gamma=0.5)
     rootlogger('Train_FuzzyTrack')
     Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                        lrScheduler=scheduler,logName='Train_FuzzyTrack')
 
-    train_loss, test_loss = Train.run(epoch_num, 10, True)
+    train_loss, test_loss = Train.run(epoch_num, div=20, show_loss=True)
 
     Fuzzy_Est = []
     for b in test_loader:

@@ -50,6 +50,10 @@ class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
         if not self.WithTime:
             self.TrackData = self.TrackData[:,:9]
         return self.Track
+    
+    def add_noise(self):
+        return None
+    
     def __getitem__(self, idx):
         sample = self.TrackData[idx:idx+self.xWin]
         label = self.TrackData[idx + self.xWin: idx + self.xWin+self.yWin]
