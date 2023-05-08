@@ -5,7 +5,7 @@
 # @Author    :Oliver
 import torch
 from FuzzyModel.FLS import *
-from utils.Decorator import *
+from FuzzyModel.Decorator import *
 from .config import device
 class BasicModel(torch.nn.Module):
     def __init__(self,xDim,rule_num,yDim=1):
@@ -128,6 +128,26 @@ class AdoptTimeFLSLayer(BasicTimeSeriesModel):
 
         return rtn * var + mean
 
+class PackingAdoptTimeFLSLayer(BasicTimeSeriesModel):
+    def __init__(self,xDim,xTimeDim,rule_num,yDim=1,yTimeDim=1):
+        super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
+        self.FLS_List=torch.nn.ModuleList()
+        for i in range(xDim):
+            self.FLS_List.append(FLSLayer(xTimeDim,rule_num))
+        self.NormPack = NormalizePacking(self.forward,xTimeDim)
+        self.forward = self.NormPack.forward
+
+    def forward(self,x):
+        # x_norm, mean,var = self.Norm(x)
+        # var, mean = (torch.var_mean(x, dim=-1))
+        xs = torch.split(x,1,dim=-2)
+        ys = []
+        for i in range(self.xDim):
+            ys.append(self.FLS_List[i](xs[i].squeeze(-2)))
+        rtn = torch.stack(ys,dim=-2)
+
+        return rtn
+
 class AdoptTimeFLSLayer_Dense(BasicTimeSeriesModel):
     def __init__(self,xDim,xTimeDim,rule_num,yDim=1,yTimeDim=1):
         super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
@@ -147,7 +167,6 @@ class AdoptTimeFLSLayer_Dense(BasicTimeSeriesModel):
                                  kernel_size=yTimeDim,
                                  stride=1,
                                  padding=0)
-
     def forward(self,x):
         x_norm, mean,var = self.Norm(x)
         # var, mean = (torch.var_mean(x, dim=-1))

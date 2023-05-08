@@ -10,7 +10,6 @@ import torch
 from .config import device
 
 
-
 class BasicInferenceLayer(torch.nn.Module):
     def __init__(self, xDim, rule_num, InferenceFunction=None):
         super().__init__()
@@ -28,6 +27,15 @@ class BasicInferenceLayer(torch.nn.Module):
 
     def setAntFunc(self, Func):
         self.Ant_Function = Func
+
+
+class BasicPacking(torch.nn.Module):
+    def __init__(self, raw_func):
+        super().__init__()
+        self.raw_func = raw_func
+
+    def __call__(self, *args, **kwargs):
+        return self.raw_func(*args, **kwargs)
 
 
 class FuzzifierLayer(torch.nn.Module):
@@ -64,8 +72,8 @@ class FuzzifierLayer(torch.nn.Module):
                                                            dim=-2)
 
         if Fuzzifier_Function is None:
-            self.Fuzzifier_Function = GaussianFunction([xDim], torch.zeros(xDim,device=device),
-                                                       torch.ones(xDim,device=device), FixedMean=True,
+            self.Fuzzifier_Function = GaussianFunction([xDim], torch.zeros(xDim, device=device),
+                                                       torch.ones(xDim, device=device), FixedMean=True,
                                                        FixedSigma=False)
 
     def forward(self, input):
@@ -89,21 +97,25 @@ class TrapInferenceLayer(BasicInferenceLayer):
         super().__init__(xDim, rule_num)
         self.Ant_Function = TrapFunction([xDim, rule_num], abcd)
 
+
 class HalfTrapInferenceLayer(BasicInferenceLayer):
-    def __init__(self,xDim,rule_num,ab=None):
-        super().__init__(xDim,rule_num)
+    def __init__(self, xDim, rule_num, ab=None):
+        super().__init__(xDim, rule_num)
         self.Ant_Function = HalfTrap([xDim, rule_num], ab)
+
+
 class StrictlyTrapInferenceLayer(BasicInferenceLayer):
-    def __init__(self,xDim,rule_num,center=None, slope_up=None, topPlat_len=None,  slope_down=None):
-        super().__init__(xDim,rule_num)
-        self.Ant_Function = StrictlyTrapFunction([xDim, rule_num], center, slope_up, topPlat_len,  slope_down)
+    def __init__(self, xDim, rule_num, center=None, slope_up=None, topPlat_len=None, slope_down=None):
+        super().__init__(xDim, rule_num)
+        self.Ant_Function = StrictlyTrapFunction([xDim, rule_num], center, slope_up, topPlat_len, slope_down)
+
 
 class HeightDefuzzifierLayer(torch.nn.Module):
     def __init__(self, rule_num, yDim=1, height=None):
         super().__init__()
         self.rule_num = rule_num
         if height is None:
-            self.para_height = torch.nn.Parameter(torch.rand([yDim, 1, rule_num],device=device))
+            self.para_height = torch.nn.Parameter(torch.rand([yDim, 1, rule_num], device=device))
         else:
             self.para_height = torch.nn.Parameter(height)
 
@@ -120,7 +132,7 @@ class TSDefuzzifierLayer(torch.nn.Module):
     def __init__(self, xDim, rule_num, yDim=1, C=None):
         super().__init__()
         if C is None:
-            self.para_C = torch.nn.Parameter(torch.rand([yDim, xDim + 1, rule_num],device=device))
+            self.para_C = torch.nn.Parameter(torch.rand([yDim, xDim + 1, rule_num], device=device))
         else:
             self.para_C = torch.nn.Parameter(C)
 
@@ -135,28 +147,46 @@ class TSDefuzzifierLayer(torch.nn.Module):
         y = C0 + torch.sum(C_ * gather_x, dim=-2)
         return torch.sum(y * Norm_Mu_Q, dim=-1) / torch.sum(Norm_Mu_Q, dim=-1)
 
+
 class FormalNorm_layer(torch.nn.Module):
-    def __init__(self,shape):
+    def __init__(self, shape):
         super().__init__()
         self.Layer_Norm = torch.nn.LayerNorm(shape)
 
-    def forward(self,x):
+    def forward(self, x):
         return self.Layer_Norm(x)
 
+
 class FixNorm_layer(torch.nn.Module):
-    def __init__(self,shape):
+    def __init__(self, shape):
         super().__init__()
-        self.Gama = torch.nn.Parameter(torch.ones(shape,device=device))
-        self.Beta = torch.nn.Parameter(torch.zeros(shape,device=device))
+        self.Gama = torch.nn.Parameter(torch.ones(shape, device=device))
+        self.Beta = torch.nn.Parameter(torch.zeros(shape, device=device))
+
     def forward(self, x):
         var, mean = (torch.var_mean(x, dim=-1))
-        return ((x-mean.unsqueeze(-1))/torch.sqrt(var.unsqueeze(-1)+1e-05)) * self.Gama + self.Beta,\
-            mean.unsqueeze(-1),var.unsqueeze(-1)
+        return ((x - mean.unsqueeze(-1)) / torch.sqrt(var.unsqueeze(-1) + 1e-05)) * self.Gama + self.Beta, \
+            mean.unsqueeze(-1), var.unsqueeze(-1)
+
+
+class NormalizePacking(BasicPacking):
+    def __init__(self, forward, shape):
+        super().__init__(forward)
+        self.Gama = torch.nn.Parameter(torch.ones(shape, device=device))
+        self.Beta = torch.nn.Parameter(torch.zeros(shape, device=device))
+    def __call__(self, x):
+        self.forward(x)
+
+    def forward(self, x):
+        var, mean = (torch.var_mean(x, dim=-1,keepdim=True))
+        x = ((x - mean) / torch.sqrt(var + 1e-05)) * self.Gama + self.Beta
+        rtn = super().__call__(x)
+        return rtn * var + mean
 
 
 if __name__ == '__main__':
     # from FLSMF import GaussianFunction, TrapFunction
-    x = torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]],device=device) / 5
+    x = torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]], device=device) / 5
     FF = FuzzifierLayer(4, 10)
     GI = GaussianInferenceLayer(4, 16)
     TSD = TSDefuzzifierLayer(4, 16)
