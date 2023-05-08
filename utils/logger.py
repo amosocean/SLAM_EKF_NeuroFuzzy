@@ -16,7 +16,7 @@ class rootlogger(object):
         self.log = logging.getLogger(logName)
         self.log.setLevel("DEBUG")
         self.add_stream_Handler()
-        log_filename = Path_LogDir("{}_LOG_{}.log".format(logName,getStrTime()), getStrTime(True, False))
+        log_filename = Path_LogDir("{}_LOG_{}.log".format(logName, getStrTime()), getStrTime(True, False))
         self.add_file_Handler(log_filename)
 
     def silence(self):

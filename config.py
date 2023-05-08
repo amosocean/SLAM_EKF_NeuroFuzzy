@@ -29,7 +29,7 @@ def getStrTime(Date=True, Time=True):
     if Date:
         format_str +="%Y-%m-%d"
     if Date and Time:
-        format_str += "_"
+        format_str += "__"
     if Time:
-        format_str += "%H:%M:%S"
+        format_str += "%H-%M-%S"
     return datetime.datetime.now().strftime(format_str)
