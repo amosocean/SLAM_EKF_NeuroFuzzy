@@ -11,7 +11,7 @@ from PyRadarTrack.Model.FilterModel import IMMFilterModel,BasicEKFModel
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.set_default_dtype(torch.double)
 Scale_vector=np.array([3000,10,1e-3]*3)
-class Random_Track_Generate(torch.utils.data.Dataset):
+class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
     def __init__(self,Simulate_frame,dt=0.1,Sigma=0.01,
                  xWin=5,yWin=1,WithTime=False,transpose=True,seed=None):
         super().__init__()
@@ -62,6 +62,6 @@ class Random_Track_Generate(torch.utils.data.Dataset):
         return self.simFrame - self.xWin - self.yWin +1
 
 if __name__ == '__main__':
-    RTG = Random_Track_Generate(500)
+    RTG = Random_Track_Dataset_Generate(500)
     for i in range(len(RTG)):
         print(RTG[i])
