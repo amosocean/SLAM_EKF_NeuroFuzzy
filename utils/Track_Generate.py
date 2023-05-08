@@ -46,7 +46,7 @@ class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
             self.Track.run_Model(np.random.choice(self.MovementModels),time)
 
         self.TrackData = self.Track.get_real_data_all().to_numpy()
-        self.TrackData=torch.tensor(self.TrackData).to(device)
+        self.TrackData=torch.tensor(self.TrackData)
         if not self.WithTime:
             self.TrackData = self.TrackData[:,:9]
         return self.Track

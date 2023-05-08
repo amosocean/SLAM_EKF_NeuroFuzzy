@@ -43,13 +43,13 @@ if __name__ == '__main__':
     train_loader = DataLoader(dataset=TFK1,
                               batch_size=batch_size,
                               shuffle=True,
-                              num_workers=0,
-                              pin_memory=False)
+                              num_workers=8,
+                              pin_memory=True)
     test_loader = DataLoader(dataset=TFK2,
                              batch_size=1,
                              shuffle=False,
                              num_workers=0,
-                             pin_memory=False)
+                             pin_memory=True)
     # A = Test(tensor_real_data[:time_dim])
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
