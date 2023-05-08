@@ -34,18 +34,19 @@ if __name__ == '__main__':
     # endregion
     
     #### 数据集加入噪声
-    TFK1_noise=TFK1.add_noise()
+    TFK1_noise=TFK1.add_noise(snr=-3)
+    TFK2_noise=TFK2.add_noise(snr=-3)
     ####
 
-    batch_size = 20000
+    batch_size = 500
     time_dim = 5
     Test = FormalNorm_layer([time_dim])
-    train_loader = DataLoader(dataset=TFK1,
+    train_loader = DataLoader(dataset=TFK1_noise,
                               batch_size=batch_size,
-                              shuffle=True,
+                              shuffle=False,
                               num_workers=0,
                               pin_memory=True)
-    test_loader = DataLoader(dataset=TFK2,
+    test_loader = DataLoader(dataset=TFK2_noise,
                              batch_size=1,
                              shuffle=False,
                              num_workers=0,
@@ -54,7 +55,7 @@ if __name__ == '__main__':
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     print(model.parameters)
-    epoch_num = 1000
+    epoch_num = 500
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,200,400,600], gamma=0.5)
@@ -66,10 +67,10 @@ if __name__ == '__main__':
 
     Fuzzy_Est = []
     for b in test_loader:
-        x = b[0]
+        x = b[0].to(device)
         # 这里是噪声
-        noise=(torch.randn(b[0].shape)* torch.sqrt(torch.tensor([0.1,0.1,1e-4]*3)).unsqueeze(-1)).to(device)
-        x = x + noise
+        # noise=(torch.randn(b[0].shape)* torch.sqrt(torch.tensor([0.1,0.1,1e-4]*3)).unsqueeze(-1)).to(device)
+        # x = x + noise
         output = model(x).squeeze()
         Fuzzy_Est.append(output)
 
@@ -81,8 +82,8 @@ if __name__ == '__main__':
     import numpy as np
 
     fig = plt.figure()
-    data_draw1 = TFK1.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
-    data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
+    data_draw1 = TFK1_noise.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
+    data_draw3 = TFK2_noise.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw4 = np.array(Fuzzy_Est_tensor[:, [0, 3, 6]].detach().cpu())
 
     ax = plt.axes(projection='3d')

@@ -3,6 +3,7 @@
 # @FileName  :Track_Generate.py
 # @Time      :2023/5/7 6:52 PM
 # @Author    :Oliver
+import copy
 import torch
 import numpy as np
 from PyRadarTrack.Model import *
@@ -46,16 +47,32 @@ class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
             self.Track.run_Model(np.random.choice(self.MovementModels),time)
 
         self.TrackData = self.Track.get_real_data_all().to_numpy()
-        self.TrackData=torch.tensor(self.TrackData)
+        self.TrackData=torch.tensor(self.TrackData)  #此时tensor还在cpu
+        self.TrackData_noisy=self.TrackData
         if not self.WithTime:
             self.TrackData = self.TrackData[:,:9]
+            self.TrackData_noisy=self.TrackData[:,:9]
         return self.Track
     
-    def add_noise(self):
-        return None
+    def add_noise(self,snr=0):
+        
+        def dim_noise(input:torch.Tensor,dim:int,snr=0)->torch.Tensor:
+            
+            def db_to_linear(db_value):
+                linear_value = 10**(db_value/20)
+                return linear_value
+            
+            std=torch.std(input,dim=dim,keepdim=True)
+            noise=torch.randn_like(input)*std*db_to_linear(snr)
+            return noise
+        dataset=copy.copy(self)
+        dataset.TrackData_noisy=dataset.TrackData+dim_noise(dataset.TrackData,dim=-2,snr=snr)
+        if self.WithTime:
+            dataset.TrackData_noisy[:,-1]=dataset.TrackData[:,-1]
+        return dataset
     
     def __getitem__(self, idx):
-        sample = self.TrackData[idx:idx+self.xWin]
+        sample = self.TrackData_noisy[idx:idx+self.xWin]
         label = self.TrackData[idx + self.xWin: idx + self.xWin+self.yWin]
         if self.Transpose:
             return sample.T,label.T
