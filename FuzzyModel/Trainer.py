@@ -59,7 +59,7 @@ class BasicTrainer(object):
         total_loss = 0
         for batch in loader:
             sample = batch[0].to(self.device)
-            gts = batch[1].to(self.device)
+            gts = batch[1].to(self.device)   #转移到gpu
             batch_len = sample.shape[0]
             pred = self.model(sample)
             loss = F.mse_loss(pred, gts)
