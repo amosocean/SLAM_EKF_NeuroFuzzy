@@ -153,7 +153,7 @@ class AdoptTimeFLSLayer_Dense(BasicTimeSeriesModel):
         super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
         self.Norm = FixNorm_layer(xTimeDim)
         # self.AlterNorm = Norm_layer(yTimeDim)
-        self.FLS_List=[]
+        self.FLS_List=torch.nn.ModuleList()
         for i in range(xDim):
             self.FLS_List.append(FLSLayer(xTimeDim,rule_num))
         #self.fc1=torch.nn.Linear(yDim,yDim)
