@@ -24,8 +24,8 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
-    TFK1 = Random_Track_Generate(Simulate_time)
-    TFK2 = Random_Track_Generate(Simulate_time)
+    TFK1 = Random_Track_Generate(Simulate_time,seed=666)
+    TFK2 = Random_Track_Generate(Simulate_time,seed=667)
     # region 规划初始点和初始速度
     X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     TFK2.gen_randomTrack(X1)
     # endregion
 
-    batch_size = 5
+    batch_size = 20
     time_dim = 5
     Test = FormalNorm_layer([time_dim])
     train_loader = DataLoader(dataset=TFK1,
@@ -47,23 +47,25 @@ if __name__ == '__main__':
                              num_workers=0,
                              pin_memory=False)
     # A = Test(tensor_real_data[:time_dim])
-    # model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
+    #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     model = PackingAdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
-    epoch_num = 10
+    print(model.parameters)
+    epoch_num = 50
     learning_rate = 10e-1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20, 50, 70], gamma=0.5)
+    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[8, 50, 70], gamma=0.5)
     rootlogger('Train_FuzzyTrack')
     Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                        lrScheduler=scheduler,logName='Train_FuzzyTrack')
 
-    train_loss, test_loss = Train.run(epoch_num, 2, True)
+    train_loss, test_loss = Train.run(epoch_num, 10, True)
 
     Fuzzy_Est = []
     for b in test_loader:
         x = b[0]
         # 这里是噪声
-        x += torch.randn(b[0].shape) * torch.sqrt(torch.tensor([10,1,1e-2]*3)).unsqueeze(-1)
+        noise=(torch.randn(b[0].shape)* torch.sqrt(torch.tensor([0.1,0.1,1e-4]*3)).unsqueeze(-1)).to(device)
+        x = x + noise
         output = model(x).squeeze()
         Fuzzy_Est.append(output)
 

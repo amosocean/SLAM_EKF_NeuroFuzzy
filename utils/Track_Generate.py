@@ -13,7 +13,7 @@ torch.set_default_dtype(torch.double)
 Scale_vector=np.array([3000,10,1e-3]*3)
 class Random_Track_Generate(torch.utils.data.Dataset):
     def __init__(self,Simulate_frame,dt=0.1,Sigma=0.01,
-                 xWin=5,yWin=1,WithTime=False,transpose=True):
+                 xWin=5,yWin=1,WithTime=False,transpose=True,seed=None):
         super().__init__()
         MMF = MovementModelFactory()
         self.SB = SimulationBox()
@@ -31,9 +31,12 @@ class Random_Track_Generate(torch.utils.data.Dataset):
         self.MovementModels = [CAModel,CTModel,CVModel]
         self.Track = None
         self.TrackData = None
+        self.seed=seed
         self.gen_randomTrack()
 
     def gen_randomTrack(self,init_point=None,div_num=10):
+        if self.seed:
+            np.random.seed(self.seed)
         X0 = np.random.rand(9)*Scale_vector * np.random.choice([-1,1],9) if init_point is None else init_point
         self.Track = TargetFromKeyframe(self.SB)
         self.Track.step(X0)
