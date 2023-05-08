@@ -60,7 +60,10 @@ if __name__ == '__main__':
 
     Fuzzy_Est = []
     for b in test_loader:
-        output = model(b[0]).squeeze()
+        x = b[0]
+        # 这里是噪声
+        x += torch.randn(b[0].shape) * torch.sqrt(torch.tensor([10,1,1e-2]*3)).unsqueeze(-1)
+        output = model(x).squeeze()
         Fuzzy_Est.append(output)
     # for t in range(Simulate_time-time_dim):
     #     input = dataset_test[t][0]
