@@ -1,26 +1,24 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# @FileName  :IMMEKF_Final.py
-# @Time      :2023/1/16 8:23 PM
-# @Author    :Kinddle
+# @FileName  :Fuzzy_Measure.py
+# @Time      :2023/5/8 4:24 PM
+# @Author    :Oliver
 
 import numpy as np
+from FuzzyModel.FLS import FormalNorm_layer
+from FuzzyModel.MyModel import AdoptTimeFLSLayer, AdoptTimeFLSLayer_Dense, PackingAdoptTimeFLSLayer
+import torch
+from torch.utils.data import DataLoader
+import torch.optim.lr_scheduler as lr_scheduler
+from utils.logger import rootlogger
+from FuzzyModel.Trainer import MSETrainer
+from utils.Track_Generate import Random_Track_Generate
 
 if __name__ == '__main__':
-
-    from FuzzyModel.FLS import FormalNorm_layer
-    from FuzzyModel.MyModel import AdoptTimeFLSLayer,AdoptTimeFLSLayer_Dense,PackingAdoptTimeFLSLayer
-    import torch
-    from torch.utils.data import DataLoader
-    import torch.optim.lr_scheduler as lr_scheduler
-    from utils.logger import rootlogger
-    from FuzzyModel.Trainer import MSETrainer
-    from utils.Track_Generate import Random_Track_Generate
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
-    TFK1 = Random_Track_Generate(Simulate_time,seed=None)
-    TFK2 = Random_Track_Generate(Simulate_time,seed=None)
+    TFK1 = Random_Track_Generate(Simulate_time,seed=666)
+    TFK2 = Random_Track_Generate(Simulate_time,seed=667)
     # region 规划初始点和初始速度
     X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
@@ -56,18 +54,16 @@ if __name__ == '__main__':
     train_loss, test_loss = Train.run(epoch_num, 10, True)
 
     Fuzzy_Est = []
-    Noise_Measure = []
     for b in test_loader:
         x = b[0]
         # 这里是噪声
         noise=(torch.randn(b[0].shape)* torch.sqrt(torch.tensor([0.1,0.1,1e-4]*3)).unsqueeze(-1)).to(device)
         x = x + noise
-        Noise_Measure.append(x.squeeze())
         output = model(x).squeeze()
         Fuzzy_Est.append(output)
 
     Fuzzy_Est_tensor = torch.stack(Fuzzy_Est)
-    Noise_Measure_tensor = torch.stack(Noise_Measure)[:,:,0]
+
     # region [+]绘图
     from mpl_toolkits import mplot3d
     import matplotlib.pyplot as plt
@@ -77,7 +73,6 @@ if __name__ == '__main__':
     data_draw1 = TFK1.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw4 = np.array(Fuzzy_Est_tensor[:, [0, 3, 6]].detach().cpu())
-    data_draw2 = np.array(Noise_Measure_tensor[:, [0, 3, 6]].detach().cpu())
 
     ax = plt.axes(projection='3d')
 
@@ -87,8 +82,8 @@ if __name__ == '__main__':
 
 
     # 三维线的数据
-    draw_3D(ax,data_draw1,"real")
-    draw_3D(ax,data_draw2,"Measure")
+    # draw_3D(ax,data_draw1,"real")
+    # draw_3D(ax,data_draw2,"Est")
     draw_3D(ax, data_draw3, "real2")
     draw_3D(ax, data_draw4, "FuzzyEst")
 
