@@ -48,10 +48,11 @@ class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
 
         self.TrackData = self.Track.get_real_data_all().to_numpy()
         self.TrackData=torch.tensor(self.TrackData)  #此时tensor还在cpu
-        self.TrackData_noisy=self.TrackData
+        self.TrackData_pure=self.TrackData
+        self.TrackData_noisy=None
         if not self.WithTime:
             self.TrackData = self.TrackData[:,:9]
-            self.TrackData_noisy=self.TrackData[:,:9]
+            self.TrackData_pure= self.TrackData
         return self.Track
     
     def add_noise(self,snr=0):
@@ -66,13 +67,23 @@ class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
             noise=torch.randn_like(input)*std*db_to_linear(snr)
             return noise
         dataset=copy.copy(self)
-        dataset.TrackData_noisy=dataset.TrackData+dim_noise(dataset.TrackData,dim=-2,snr=snr)
+        dataset.TrackData=dataset.TrackData+dim_noise(dataset.TrackData,dim=-2,snr=snr)
+        dataset.TrackData_noisy=dataset.TrackData
         if self.WithTime:
-            dataset.TrackData_noisy[:,-1]=dataset.TrackData[:,-1]
+            dataset.TrackData[:,-1]=dataset.TrackData[:,-1]
+            dataset.TrackData_noisy=dataset.TrackData
         return dataset
     
+    def get_pure_track(self): #使用这个直接获得轨迹tensor
+        return self.TrackData_pure
+    
+    def get_noisy_track(self,snr=0):#使用这个直接获得含有噪声的轨迹tensor,如果还没加噪声，可以添加
+        if self.TrackData_noisy is not None:
+            self.add_noise(snr=snr)
+        return self.TrackData_noisy
+    
     def __getitem__(self, idx):
-        sample = self.TrackData_noisy[idx:idx+self.xWin]
+        sample = self.TrackData[idx:idx+self.xWin]
         label = self.TrackData[idx + self.xWin: idx + self.xWin+self.yWin]
         if self.Transpose:
             return sample.T,label.T
