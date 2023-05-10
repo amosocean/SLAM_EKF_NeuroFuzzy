@@ -32,12 +32,11 @@ if __name__ == '__main__':
     
     #### 数据集加入噪声
     TFK1=TFK1.add_noise(snr=-150)
-    TFK2=TFK2.add_noise(snr=-15)
+    TFK2=TFK2.add_noise(snr=-25)
     ####
 
 
-    train_loader = DataLoader(dataset=TFK1_noise,
-
+    train_loader = DataLoader(dataset=TFK1,
                               batch_size=batch_size,
                               shuffle=False,
                               num_workers=0,
@@ -51,7 +50,7 @@ if __name__ == '__main__':
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     print(model.parameters)
-    epoch_num = 10
+    epoch_num = 500
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,200,400,600], gamma=0.5)
@@ -59,7 +58,7 @@ if __name__ == '__main__':
     Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                        lrScheduler=scheduler,logName='Train_FuzzyTrack')
 
-    train_loss, test_loss = Train.run(epoch_num, div=20, show_loss=True)
+    train_loss, test_loss = Train.run(epoch_num, div=50, show_loss=True)
 
     Fuzzy_Est = []
 
