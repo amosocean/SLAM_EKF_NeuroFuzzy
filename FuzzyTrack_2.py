@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     batch_size = 500
     time_dim = 5
-    train_loader = DataLoader(dataset=TFK1_noise,
+    train_loader = DataLoader(dataset=TFK1,
                               batch_size=batch_size,
                               shuffle=False,
                               num_workers=0,
