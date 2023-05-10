@@ -229,9 +229,9 @@ class BasicLSTMNet(nn.Module):
         #return out.squeeze(dim=-1)
         return out.unsqueeze(dim=-1)
 class LSTMNet(BasicLSTMNet):
-    def __init__(self, xDim,xTimeDim,hidden_size,yDim=1,yTimeDim=1):#yTimeDim=1 是out = self.fc(out[:, -1, :])决定的，还没有完成动态设计
+    def __init__(self, xDim,xTimeDim,hidden_size,num_layers=1,yDim=1,yTimeDim=1):#yTimeDim=1 是out = self.fc(out[:, -1, :])决定的，还没有完成动态设计
         assert yTimeDim==1,"还不支持不是 yTimeDim==1的情况"
-        super(LSTMNet,self).__init__(input_size=xDim, hidden_size=hidden_size, num_layers=xTimeDim, output_size=yDim)
+        super(LSTMNet,self).__init__(input_size=xDim, hidden_size=hidden_size, num_layers=num_layers, output_size=yDim)
         self.NormPack = NormalizePacking(self.forward,xTimeDim)
         self.forward = self.NormPack.forward
 
