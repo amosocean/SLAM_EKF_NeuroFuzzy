@@ -115,8 +115,8 @@ if __name__ == '__main__':
     # TFK1.gen_randomTrack(X0)
     # TFK2.gen_randomTrack(X1)
 
-    TFK1_noise=TFK1.add_noise(snr=-0)
-    TFK2_noise=TFK2.add_noise(snr=-0)
+    TFK1_noise=TFK1.add_noise(snr=0)
+    TFK2_noise=TFK2.add_noise(snr=0)
 
     train_loader = DataLoader(dataset=TFK1_noise,
                               batch_size=batchSize,
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     # region 训练模型
     print(model.parameters)
-    epoch_num = 10
+    epoch_num = 3
     learning_rate = 1e-1
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,200,400,600], gamma=0.5)
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     # region 效果展示
     SW = SlidingWindow(model)
     Est = None
-    for b in TFK2.TrackData_noisy:
+    for b in TFK2_noise.TrackData_noisy:
         if Est is not None:
             loss = torch.nn.functional.mse_loss(Est, b.unsqueeze(-1))
             print(loss)
@@ -160,7 +160,6 @@ if __name__ == '__main__':
     import numpy as np
 
     fig = plt.figure()
-
     ax = plt.axes(projection='3d')
     def draw_3D(Ax, data_draw, label):
         data_draw = np.array(data_draw)
@@ -169,14 +168,35 @@ if __name__ == '__main__':
         z = data_draw[:, 2]
         Ax.plot3D(x, y, z, label=label)
 
-    data_draw_1 = TFK2.TrackData[:,[0,3,6]].detach()
-    data_draw_2 = TFK2.TrackData_noisy[:,[0,3,6]].detach()
-    data_draw_3 = SW.Est[[0,3,6],:].T.detach()
+    data_draw_1 = np.array(TFK2_noise.TrackData[:,[0,3,6]].detach())
+    data_draw_2 = np.array(TFK2_noise.TrackData_noisy[:,[0,3,6]].detach())
+    data_draw_3 = np.array(SW.Est[[0,3,6],:].T.detach())
     draw_3D(ax,data_draw_1,"True")
     draw_3D(ax,data_draw_2,"Measure")
     draw_3D(ax,data_draw_3,"Est")
 
     plt.legend()
+    plt.show()
+    fig2 = plt.figure()
+    x = torch.arange(Simulate_time)*dt
+    plt.subplot(2,2,1)
+    plt.plot(x, data_draw_2[:,0],label="Measure")
+    plt.plot(x[Win-1:], data_draw_3[:, 0],label="Est")
+    plt.plot(x, data_draw_1[:,0], label="True")
+    plt.legend()
+
+    plt.subplot(2,2,2)
+    plt.plot(x, data_draw_2[:,1],label="Measure")
+    plt.plot(x[Win-1:], data_draw_3[:, 1],label="Est")
+    plt.plot(x, data_draw_1[:,1], label="True")
+    plt.legend()
+
+    plt.subplot(2,2,3)
+    plt.plot(x, data_draw_2[:,2],label="Measure")
+    plt.plot(x[Win-1:], data_draw_3[:, 2],label="Est")
+    plt.plot(x, data_draw_1[:,2], label="True")
+    plt.legend()
+
     plt.show()
 
     # endregion
