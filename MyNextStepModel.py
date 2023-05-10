@@ -72,7 +72,7 @@ class SlidingWindow(object):
     def __call__(self, x):
         self.dataTemp = torch.concat([self.dataTemp,x],dim=1)
         if self.dataTemp.shape[1]>=self.TimeWin:
-            Est = self.EvalModel(self.dataTemp[:,-self.TimeWin:])
+            Est = self.EvalModel(self.dataTemp[:, -self.TimeWin:])
             self.Est = torch.concat([self.Est,Est],dim=1)
             return Est
         else:
@@ -107,16 +107,16 @@ if __name__ == '__main__':
     # region 设计数据集
     # TFK1 = Random_Track_Dataset_Generate(Simulate_time, seed=None)
     # TFK2 = Random_Track_Dataset_Generate(Simulate_time, seed=None)
-    TFK1 = Random_Track_Dataset_Generate(Simulate_time,seed=666,xWin=Win)
-    TFK2 = Random_Track_Dataset_Generate(Simulate_time,seed=667,xWin=Win)
+    TFK1 = Random_Track_Dataset_Generate(Simulate_time,seed=None,xWin=Win)
+    TFK2 = Random_Track_Dataset_Generate(Simulate_time,seed=None,xWin=Win)
     # X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     # X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
     #
     # TFK1.gen_randomTrack(X0)
     # TFK2.gen_randomTrack(X1)
 
-    TFK1_noise=TFK1.add_noise(snr=-3)
-    TFK2_noise=TFK2.add_noise(snr=-3)
+    TFK1_noise=TFK1.add_noise(snr=-0)
+    TFK2_noise=TFK2.add_noise(snr=-0)
 
     train_loader = DataLoader(dataset=TFK1_noise,
                               batch_size=batchSize,
@@ -132,22 +132,28 @@ if __name__ == '__main__':
 
     # region 训练模型
     print(model.parameters)
-    epoch_num = 2
-    learning_rate = 1e-2
+    epoch_num = 10
+    learning_rate = 1e-1
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,200,400,600], gamma=0.5)
 
     Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                        lrScheduler=scheduler,logName='Train_NextStepModel')
 
-    train_loss, test_loss = Train.run(epoch_num, div=20, show_loss=True)
+    train_loss, test_loss = Train.run(epoch_num, div=2, show_loss=True)
 
     # endregion
 
     # region 效果展示
     SW = SlidingWindow(model)
+    Est = None
     for b in TFK2.TrackData_noisy:
-        SW(b.unsqueeze(-1))
+        if Est is not None:
+            loss = torch.nn.functional.mse_loss(Est, b.unsqueeze(-1))
+            print(loss)
+        Est = SW(b.unsqueeze(-1))
+
+
 
     import matplotlib.pyplot as plt
     from mpl_toolkits import mplot3d
