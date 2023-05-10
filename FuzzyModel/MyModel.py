@@ -153,20 +153,16 @@ class AdoptTimeFLSLayer_Dense(BasicTimeSeriesModel):
         super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
         self.Norm = FixNorm_layer(xTimeDim)
         # self.AlterNorm = Norm_layer(yTimeDim)
-        self.FLS_List=[]
+        self.FLS_List=torch.nn.ModuleList()
         for i in range(xDim):
             self.FLS_List.append(FLSLayer(xTimeDim,rule_num))
         #self.fc1=torch.nn.Linear(yDim,yDim)
-        self.fc1=torch.nn.Conv1d(in_channels=yDim,
-                                 out_channels=yDim,
-                                 kernel_size=yTimeDim,
-                                 stride=1,
-                                 padding=0)
-        self.fc2=torch.nn.Conv1d(in_channels=yDim,
-                                 out_channels=yDim,
-                                 kernel_size=yTimeDim,
-                                 stride=1,
-                                 padding=0)
+        self.dense2=torch.nn.Sequential(
+            torch.nn.Conv1d(in_channels=yDim,out_channels=36,kernel_size=yTimeDim,stride=1,padding=0),
+            torch.nn.ReLU(),
+            torch.nn.Conv1d(in_channels=36,out_channels=yDim,kernel_size=yTimeDim,stride=1,padding=0)
+            )
+
     def forward(self,x):
         x_norm, mean,var = self.Norm(x)
         # var, mean = (torch.var_mean(x, dim=-1))
@@ -175,9 +171,33 @@ class AdoptTimeFLSLayer_Dense(BasicTimeSeriesModel):
         for i in range(self.xDim):
             ys.append(self.FLS_List[i](xs[i].squeeze(-2)))
         rtn = torch.stack(ys,dim=-2)
-        rtn = self.fc1(rtn)
-        rtn = torch.nn.functional.relu(rtn)
-        rtn = self.fc2(rtn)
+        rtn = self.dense2(rtn)
+        return rtn * var + mean
+
+class Dense_AdoptTimeFLSLayer(BasicTimeSeriesModel):
+    def __init__(self,xDim,xTimeDim,rule_num,yDim=1,yTimeDim=1):
+        super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
+        self.Norm = FixNorm_layer(xTimeDim)
+        # self.AlterNorm = Norm_layer(yTimeDim)
+        self.FLS_List=torch.nn.ModuleList()
+        for i in range(xDim):
+            self.FLS_List.append(FLSLayer(xTimeDim,rule_num))
+        #self.fc1=torch.nn.Linear(yDim,yDim)
+        self.dense2=torch.nn.Sequential(
+            torch.nn.Conv1d(in_channels=yDim,out_channels=yDim,kernel_size=yTimeDim,stride=1,padding=0),
+            torch.nn.ReLU(),
+            torch.nn.Conv1d(in_channels=yDim,out_channels=yDim,kernel_size=yTimeDim,stride=1,padding=0)
+            )
+
+    def forward(self,x):
+        x_norm, mean,var = self.Norm(x)
+        # var, mean = (torch.var_mean(x, dim=-1))
+        xs = torch.split(x_norm,1,dim=-2)
+        ys = []
+        for i in range(self.xDim):
+            ys.append(self.FLS_List[i](xs[i].squeeze(-2)))
+        rtn = torch.stack(ys,dim=-2)
+        rtn = self.dense2(rtn)
         return rtn * var + mean
 
 class DifferenceLayer(BasicTimeSeriesModel):
