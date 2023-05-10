@@ -35,7 +35,6 @@ if __name__ == '__main__':
 
     batch_size = 500
     time_dim = 5
-    Test = FormalNorm_layer([time_dim])
     train_loader = DataLoader(dataset=TFK1_noise,
                               batch_size=batch_size,
                               shuffle=False,
