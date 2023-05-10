@@ -6,11 +6,6 @@
 
 import numpy as np
 
-from PyRadarTrack import *
-from PyRadarTrack.Model import *
-from PyRadarTrack.Simulate import *
-from PyRadarTrack.Model.FilterModel import IMMFilterModel, BasicEKFModel
-
 if __name__ == '__main__':
 
     from FuzzyModel.FLS import FormalNorm_layer
@@ -66,6 +61,7 @@ if __name__ == '__main__':
     train_loss, test_loss = Train.run(epoch_num, div=20, show_loss=True)
 
     Fuzzy_Est = []
+    Noise_Measure = []
     for b in test_loader:
         x = b[0].to(device)
         # 这里是噪声
@@ -75,7 +71,7 @@ if __name__ == '__main__':
         Fuzzy_Est.append(output)
 
     Fuzzy_Est_tensor = torch.stack(Fuzzy_Est)
-
+    Noise_Measure_tensor = torch.stack(Noise_Measure)[:,:,0]
     # region [+]绘图
     from mpl_toolkits import mplot3d
     import matplotlib.pyplot as plt
@@ -85,6 +81,7 @@ if __name__ == '__main__':
     data_draw1 = TFK1_noise.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw3 = TFK2_noise.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw4 = np.array(Fuzzy_Est_tensor[:, [0, 3, 6]].detach().cpu())
+    data_draw2 = np.array(Noise_Measure_tensor[:, [0, 3, 6]].detach().cpu())
 
     ax = plt.axes(projection='3d')
 
@@ -94,8 +91,8 @@ if __name__ == '__main__':
 
 
     # 三维线的数据
-    # draw_3D(ax,data_draw1,"real")
-    # draw_3D(ax,data_draw2,"Est")
+    draw_3D(ax,data_draw1,"real")
+    draw_3D(ax,data_draw2,"Measure")
     draw_3D(ax, data_draw3, "real2")
     draw_3D(ax, data_draw4, "FuzzyEst")
 
