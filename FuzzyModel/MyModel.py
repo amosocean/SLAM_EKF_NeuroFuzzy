@@ -4,6 +4,7 @@
 # @Time      :2023/4/25 9:22 PM
 # @Author    :Oliver
 import torch
+import torch.nn as nn
 from FuzzyModel.FLS import *
 from FuzzyModel.Decorator import *
 from .config import device
@@ -207,4 +208,28 @@ class DifferenceLayer(BasicTimeSeriesModel):
     def forward(self, x):
         pass
 
+class BasicLSTMNet(nn.Module):
+    def __init__(self, input_size=9, hidden_size=64, num_layers=4, output_size=5):
+        super(BasicLSTMNet, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+    def forward(self, x):
+        x=x.permute(0, 2, 1)#调整为(N,Length,Input_channel)顺序
+        # 初始化 LSTM 隐藏状态
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(device)
+        # 前向传递 LSTM
+        out, (hn, cn) = self.lstm(x, (h0, c0))
+        # 使用线性层来将 LSTM 输出映射到输出空间
+        out = self.fc(out[:, -1, :])
+        #return out.squeeze(dim=-1)
+        return out.unsqueeze(dim=-1)
+class LSTMNet(BasicLSTMNet):
+    def __init__(self, xDim,xTimeDim,hidden_size,yDim=1,yTimeDim=1):#yTimeDim=1 是out = self.fc(out[:, -1, :])决定的，还没有完成动态设计
+        assert yTimeDim==1,"还不支持不是 yTimeDim==1的情况"
+        super(LSTMNet,self).__init__(input_size=xDim, hidden_size=hidden_size, num_layers=xTimeDim, output_size=yDim)
+        self.NormPack = NormalizePacking(self.forward,xTimeDim)
+        self.forward = self.NormPack.forward
 
