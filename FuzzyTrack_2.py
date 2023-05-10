@@ -30,11 +30,11 @@ if __name__ == '__main__':
     
     #### 数据集加入噪声
     TFK1=TFK1.add_noise(snr=-150)
-    TFK2=TFK2.add_noise(snr=-50)
+    TFK2=TFK2.add_noise(snr=-15)
     ####
 
     batch_size = 500
-    time_dim = 5
+    time_dim = 15
     Test = FormalNorm_layer([time_dim])
     train_loader = DataLoader(dataset=TFK1,
                               batch_size=batch_size,
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     print(model.parameters)
-    epoch_num = 2
+    epoch_num = 10
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,200,400,600], gamma=0.5)
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     # 三维线的数据
     draw_3D(ax,data_draw1,"real")
-    draw_3D(ax,data_draw2,"Measure")
+    draw_3D(ax,data_draw2,"Measure(Noisy)")
     #draw_3D(ax, data_draw3, "real2")
     draw_3D(ax, data_draw4, "FuzzyEst")
 
