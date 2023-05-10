@@ -16,8 +16,8 @@ if __name__ == '__main__':
     from utils.logger import rootlogger
     from FuzzyModel.Trainer import MSETrainer
     from utils.Track_Generate import Random_Track_Dataset_Generate
-    batch_size = 500
-    time_dim = 5
+    batch_size = 50
+    time_dim =20
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
@@ -48,9 +48,9 @@ if __name__ == '__main__':
                              pin_memory=True)
     # A = Test(tensor_real_data[:time_dim])
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
-    model = LSTMNet(xDim=9, xTimeDim=1, hidden_size=16, yDim=9, yTimeDim=1).to(device=device)
+    model = LSTMNet(xDim=9, xTimeDim=time_dim,num_layers=5, hidden_size=8, yDim=9, yTimeDim=1).to(device=device)
     print(model.parameters)
-    epoch_num = 50
+    epoch_num = 10
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
