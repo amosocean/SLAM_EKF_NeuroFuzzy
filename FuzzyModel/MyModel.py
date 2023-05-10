@@ -33,11 +33,11 @@ class BasicTimeSeriesModel(torch.nn.Module):
 
 @scale()
 class FLSLayer(BasicModel):
-    def __init__(self,xDim,rule_num):
+    def __init__(self,xDim,rule_num,yDim=1):
         super().__init__(xDim,rule_num)
         self.Fuzzifier = FuzzifierLayer(xDim)
         self.Inference = GaussianInferenceLayer(xDim,rule_num)
-        self.Defuzzifier = HeightDefuzzifierLayer(rule_num)
+        self.Defuzzifier = HeightDefuzzifierLayer(rule_num,yDim)
         # self.Defuzzifier = DefuzzifierLayer(rule_num,ySampleDim=100)
 
     def forward(self,input):
@@ -113,7 +113,7 @@ class AdoptTimeFLSLayer(BasicTimeSeriesModel):
         super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
         self.Norm = FixNorm_layer(xTimeDim)
         # self.AlterNorm = Norm_layer(yTimeDim)
-        self.FLS_List=[]
+        self.FLS_List=torch.nn.ModuleList()
         for i in range(xDim):
             self.FLS_List.append(FLSLayer(xTimeDim,rule_num))
 

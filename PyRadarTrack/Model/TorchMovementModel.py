@@ -5,14 +5,15 @@
 # @Author    :Oliver
 
 import torch
+import math
 from torch.distributions.multivariate_normal import MultivariateNormal
 from PyRadarTrack.Core.Register import Register
 from PyRadarTrack.Core.BasicFactory import BasicFactory
 from PyRadarTrack.Core.BasicObject import BasicObject
 TorchMovementRegister = Register()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
+defaultXDim = 9
+defaultQDim = 9
 class BaseMovementModel(torch.nn.Module, BasicObject):
     """
     运动模型最基础的功能就是：根据本时刻的状态向量推演下一时刻目标的状态向量
@@ -31,12 +32,13 @@ class BaseMovementModel(torch.nn.Module, BasicObject):
             self.setGArray(torch.eye(self.XDim, device=device))
         self.dt = None
         self.QSigma = None
+        
         if device.type =="cpu":
             self.M = MultivariateNormal(torch.zeros(self.QDim), self.Q)     # 这种实现似乎不容易在GPU上跑
-            self.forward = self.nextstepCpu
+            # self.forward = self.nextstepCpu
         else:
             self.sqrtQ = torch.linalg.cholesky(self.Q)
-            self.forward = self.nextstepGeneral
+            # self.forward = self.nextstepGeneral
 
     def setGArray(self, G):
         self.G[:] = G
@@ -64,33 +66,36 @@ class BaseMovementModel(torch.nn.Module, BasicObject):
     def EnsuringXStraight(self, X):
         return X
 
+    def forward(self,X):
+        X = X.unsqueeze(-1)
+        NextX = self.F @ X
+        return NextX.squeeze(-1)
 
-import numpy as np
+class CVModel(BaseMovementModel):
+    def __init__(self,dt,Sigma,XDim=defaultXDim,QDim=defaultQDim):
+        super().__init__(XDim, QDim)
+        self.setFQ(dt,Sigma)
+
+    def setFQ(self,dt,Sigma):
+        self.dt = dt
+        self.QSigma = Sigma
+        self.F = torch.kron(torch.eye(3), torch.tensor([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
+        self.Q = torch.kron(torch.eye(3),
+                         torch.tensor([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
+
+# import numpy as torch
 @TorchMovementRegister.register
 class CVModel(BaseMovementModel):
     def __init__(self, dt, Sigma, *args, **kwargs):
-        super(CVModel, self).__init__()
+        super(BaseMovementModel, self).__init__()
         self.setFQ(dt, Sigma)
 
     def setFQ(self, dt, Sigma):
         self.dt = dt
         self.QSigma = Sigma
-        self.F = np.kron(np.eye(3), np.array([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
-        self.Q = np.kron(np.eye(3),
-                         np.array([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
-        # 此乃平面
-        # self.F = np.array([[1, dt, 0, 0, 0, 0],
-        #                    [0, 1, 0, 0, 0, 0],
-        #                    [0, 0, 0, 0, 0, 0],
-        #                    [0, 0, 0, 1, dt, 0],
-        #                    [0, 0, 0, 0, 1, 0],
-        #                    [0, 0, 0, 0, 0, 0], ])
-        # self.Q = np.array([[dt ** 3 / 3, dt ** 2 / 2, 0, 0, 0, 0],
-        #                    [dt ** 2 / 2, dt, 0, 0, 0, 0],
-        #                    [0, 0, 0, 0, 0, 0],
-        #                    [0, 0, 0, dt ** 3 / 3, dt ** 2 / 2, 0],
-        #                    [0, 0, 0, dt ** 2 / 2, dt, 0],
-        #                    [0, 0, 0, 0, 0, 0], ]) * self.Sigma
+        self.F = torch.kron(torch.eye(3), torch.tensor([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
+        self.Q = torch.kron(torch.eye(3),
+                         torch.tensor([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
 
 
 @TorchMovementRegister.register
@@ -103,24 +108,13 @@ class CAModel(BaseMovementModel):
     def setFQ(self, dt, Sigma):
         self.dt = dt
         self.QSigma = Sigma
-        self.F = np.kron(np.eye(3), np.array([[1, dt, dt ** 2 / 2], [0, 1, dt], [0, 0, 1]]))
-        # self.Q = np.kron(np.eye(3),
-        #                  np.array([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
-        self.Q = np.kron(np.eye(3), np.array([[dt ** 5 / 20, dt ** 4 / 8, dt ** 3 / 6],
+        self.F = torch.kron(torch.eye(3), torch.tensor([[1, dt, dt ** 2 / 2], [0, 1, dt], [0, 0, 1]]))
+        # self.Q = torch.kron(torch.eye(3),
+        #                  torch.tensor([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
+        self.Q = torch.kron(torch.eye(3), torch.tensor([[dt ** 5 / 20, dt ** 4 / 8, dt ** 3 / 6],
                                               [dt ** 4 / 8, dt ** 3 / 3, dt ** 2 / 2],
                                               [dt ** 3 / 6, dt ** 2 / 2, dt]])) * self.QSigma
-        # self.F = np.array([[1, dt, dt ** 2 / 2, 0, 0, 0],
-        #                    [0, 1, dt, 0, 0, 0],
-        #                    [0, 0, 1, 0, 0, 0],
-        #                    [0, 0, 0, 1, dt, dt ** 2 / 2],
-        #                    [0, 0, 0, 0, 1, dt],
-        #                    [0, 0, 0, 0, 0, 1], ])
-        # self.Q = np.array([[dt ** 5 / 20, dt ** 4 / 8, dt ** 3 / 6, 0, 0, 0],
-        #                    [dt ** 4 / 8, dt ** 3 / 3, dt ** 2 / 2, 0, 0, 0],
-        #                    [dt ** 3 / 6, dt ** 2 / 2, dt, 0, 0, 0],
-        #                    [0, 0, 0, dt ** 5 / 20, dt ** 4 / 8, dt ** 3 / 6],
-        #                    [0, 0, 0, dt ** 5 / 20, dt ** 3 / 3, dt ** 2 / 2],
-        #                    [0, 0, 0, dt ** 3 / 6, dt ** 2 / 2, dt], ]) * self.QSigma
+
 
     def EnsuringXStraight(self, X):
         # 将加速度改变到速度所对应的方向
@@ -128,8 +122,8 @@ class CAModel(BaseMovementModel):
         X = X.copy()
         vecV = X[[1, 4, 7]]
         vecA = X[[2, 5, 8]]
-        normA = np.linalg.norm(vecA)
-        DirectV = vecV / np.linalg.norm(vecV)
+        normA = torch.linalg.norm(vecA)
+        DirectV = vecV / torch.linalg.norm(vecV)
         newA = DirectV * normA
         X[[2, 5, 8]] = newA
         return X
@@ -151,28 +145,19 @@ class CTxyModel(BaseMovementModel):
         self.dt = dt
         self.QSigma = Sigma
         self.w = w
-        # self.F = np.array([[1, np.sin(w * dt) / w, 0, 0, -(1 - np.cos(w * dt)) / w, 0, 0, 0, 0],
-        #                    [0, np.cos(w * dt), 0, 0, -np.sin(w * dt), 0, 0, 0, 0],
-        #                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #                    [0, (1 - np.cos(w * dt)) / w, 0, 1, np.sin(w * dt) / w, 0, 0, 0, 0, 0],
-        #                    [0, np.sin(w * dt), 0, 0, np.cos(w * dt), 0, 0, 0, 0, 0],
-        #                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #                    [0, 0, 0, 0, 0, 0, 0, 1, dt, 0],
-        #                    [0, 0, 0, 0, 0, 0, 0, 0, 1, dt],
-        #                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],])
-        self.F = np.zeros([self.XDim, self.XDim])
-        Fw = lambda w: np.array([[1, np.sin(w * dt) / w, 0, 0, -(1 - np.cos(w * dt)) / w, 0],
-                                 [0, np.cos(w * dt), 0, 0, -np.sin(w * dt), 0],
+        self.F = torch.zeros([self.XDim, self.XDim])
+        Fw = lambda w: torch.tensor([[1, math.sin(w * dt) / w, 0, 0, -(1 - math.cos(w * dt)) / w, 0],
+                                 [0, math.cos(w * dt), 0, 0, -math.sin(w * dt), 0],
                                  [0, 0, 0, 0, 0, 0],
-                                 [0, (1 - np.cos(w * dt)) / w, 0, 1, np.sin(w * dt) / w, 0],
-                                 [0, np.sin(w * dt), 0, 0, np.cos(w * dt), 0],
+                                 [0, (1 - math.cos(w * dt)) / w, 0, 1, math.sin(w * dt) / w, 0],
+                                 [0, math.sin(w * dt), 0, 0, math.cos(w * dt), 0],
                                  [0, 0, 0, 0, 0, 0], ]) if w != 0 \
-            else np.kron(np.eye(3), np.array([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
+            else torch.kron(torch.eye(3), torch.tensor([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
         self.F[0:6, 0:6] += Fw(w)
-        self.F[6:9, 6:9] += np.array(np.array([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
+        self.F[6:9, 6:9] += (torch.tensor([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
 
-        self.Q = np.kron(np.eye(3),
-                         np.array([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
+        self.Q = torch.kron(torch.eye(3),
+                         torch.tensor([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
 
 
 # @MovementRegister.register
@@ -194,33 +179,33 @@ class CTModelErr(BaseMovementModel):
         self.wx = wx
         self.wy = wy
         self.wz = wz
-        Fw = lambda w: np.array([[1, np.sin(w * dt) / w, 0, 0, -(1 - np.cos(w * dt)) / w, 0],
-                                 [0, np.cos(w * dt), 0, 0, -np.sin(w * dt), 0],
+        Fw = lambda w: torch.tensor([[1, torch.sin(w * dt) / w, 0, 0, -(1 - torch.cos(w * dt)) / w, 0],
+                                 [0, torch.cos(w * dt), 0, 0, -torch.sin(w * dt), 0],
                                  [0, 0, 0, 0, 0, 0],
-                                 [0, (1 - np.cos(w * dt)) / w, 0, 1, np.sin(w * dt) / w, 0],
-                                 [0, np.sin(w * dt), 0, 0, np.cos(w * dt), 0],
+                                 [0, (1 - torch.cos(w * dt)) / w, 0, 1, torch.sin(w * dt) / w, 0],
+                                 [0, torch.sin(w * dt), 0, 0, torch.cos(w * dt), 0],
                                  [0, 0, 0, 0, 0, 0], ]) if w != 0 \
-            else np.kron(np.eye(3), np.array([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
+            else torch.kron(torch.eye(3), torch.tensor([[1, dt, 0], [0, 1, 0], [0, 0, 0]]))
 
-        self.F = np.zeros([self.XDim, self.XDim])
+        self.F = torch.zeros([self.XDim, self.XDim])
         self.F[0:6, 0:6] += Fw(self.wz)
         self.F[[[i] for i in [0, 1, 2, 6, 7, 8]], [0, 1, 2, 6, 7, 8, ]] += Fw(self.wy)
         self.F[3:9, 3:9] += Fw(self.wx)
 
-        # self.Q = np.array([[dt ** 3 / 3, dt ** 2 / 2, 0, 0, 0, 0],
+        # self.Q = torch.tensor([[dt ** 3 / 3, dt ** 2 / 2, 0, 0, 0, 0],
         #                    [dt ** 2 / 2, dt, 0, 0, 0, 0],
         #                    [0, 0, 0, 0, 0, 0],
         #                    [0, 0, 0, dt ** 3 / 3, dt ** 2 / 2, 0],
         #                    [0, 0, 0, dt ** 2 / 2, dt, 0],
         #                    [0, 0, 0, 0, 0, 0], ]) * self.Sigma
-        self.Q = np.kron(np.eye(3),
-                         np.array([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
+        self.Q = torch.kron(torch.eye(3),
+                         torch.tensor([[dt ** 3 / 3, dt ** 2 / 2, 0], [dt ** 2 / 2, dt, 0], [0, 0, 0]])) * self.QSigma
 
 
-class MovementModelFactory(BasicFactory):
+class TorchMovementModelFactory(BasicFactory):
 
     def __init__(self):
-        super(MovementModelFactory, self).__init__()
+        super(TorchMovementModelFactory, self).__init__()
         self.service_dict = TorchMovementRegister
 
 if __name__ == '__main__':

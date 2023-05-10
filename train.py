@@ -39,8 +39,9 @@ test_loader = DataLoader(dataset=test_dataset,
 # customize your own model here:
 scale = max(max(test_dataset.series), max(train_dataset.series))
 # model = TrapFLSLayer(input_dim, 16).to(device)
-model = StrictlyTrapFLSLayer(input_dim, 16).to(device)
+# model = StrictlyTrapFLSLayer(input_dim, 16).to(device)
 # model = FLSLayer(input_dim, 16).to(device)
+model = TSFLSLayer(input_dim, 16).to(device)
 # model = TwoHalfTrapFLSLayer(input_dim, 16).to(device)
 model.set_xy_offset_scale(x_scale=1 / scale, y_scale=1 / scale)
 

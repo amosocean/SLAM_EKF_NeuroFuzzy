@@ -115,7 +115,7 @@ class HeightDefuzzifierLayer(torch.nn.Module):
         super().__init__()
         self.rule_num = rule_num
         if height is None:
-            self.para_height = torch.nn.Parameter(torch.rand([yDim, 1, rule_num], device=device))
+            self.para_height = torch.nn.Parameter(torch.rand([yDim,  rule_num], device=device))
         else:
             self.para_height = torch.nn.Parameter(height)
 
@@ -141,8 +141,8 @@ class TSDefuzzifierLayer(torch.nn.Module):
         Mu_Q, x_idx = torch.max(Mu_Q, dim=-3, keepdim=True)
         gather_x = torch.gather(extend_x, -3, x_idx)
 
-        C0 = self.para_C[:, 0]
-        C_ = self.para_C[:, 1:]
+        C0 = self.para_C[..., 0:1, :]
+        C_ = self.para_C[..., 1:, :]
         Norm_Mu_Q = torch.prod(Mu_Q, dim=-2)
         y = C0 + torch.sum(C_ * gather_x, dim=-2)
         return torch.sum(y * Norm_Mu_Q, dim=-1) / torch.sum(Norm_Mu_Q, dim=-1)
