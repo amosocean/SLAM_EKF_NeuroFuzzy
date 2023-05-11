@@ -49,7 +49,7 @@ if Approximate:
 shows = True
 if shows:
     x = torch.linspace(-2, 5, 400)
-    a,b,c,d = 0,2,1,3
+    a,b,c,d = 1,1,2,3
     h1= half(a,b,F_C2)
     h2= half(d,c,F_C2)
     h3= half(a,b,F_C)

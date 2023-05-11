@@ -115,8 +115,8 @@ if __name__ == '__main__':
     # TFK1.gen_randomTrack(X0)
     # TFK2.gen_randomTrack(X1)
 
-    TFK1_noise=TFK1.add_noise(snr=0)
-    TFK2_noise=TFK2.add_noise(snr=0)
+    TFK1_noise=TFK1.add_noise(snr=-25)
+    TFK2_noise=TFK2.add_noise(snr=-25)
 
     train_loader = DataLoader(dataset=TFK1_noise,
                               batch_size=batchSize,

@@ -11,8 +11,11 @@ from PyRadarTrack.Simulate import *
 from PyRadarTrack.Model.FilterModel import IMMFilterModel,BasicEKFModel
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.set_default_dtype(torch.double)
-Scale_vector=np.array([3000,10,1e-3]*3)
 class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
+    Scale_vector=np.array([3000,10,1e-3]*3)
+    MovementModelMap = {"CV":"CVModel",
+                        "CT": "CTxyModel",
+                        "CA": "CAModel"}
     def __init__(self,Simulate_frame,dt=0.1,Sigma=0.01,
                  xWin=5,yWin=1,WithTime=False,transpose=True,seed=None):
         super().__init__()
@@ -38,7 +41,7 @@ class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
     def gen_randomTrack(self,init_point=None,div_num=10):
         if self.seed:
             np.random.seed(self.seed)
-        X0 = np.random.rand(9)*Scale_vector * np.random.choice([-1,1],9) if init_point is None else init_point
+        X0 = np.random.rand(9)*self.Scale_vector * np.random.choice([-1,1],9) if init_point is None else init_point
         self.Track = TargetFromKeyframe(self.SB)
         self.Track.step(X0)
         ShiftTime = np.r_[0, np.sort(np.random.choice(np.arange(self.simFrame-1),div_num)),self.simFrame-1]
