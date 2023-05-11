@@ -86,6 +86,11 @@ if __name__ == '__main__':
                                 shuffle=False,
                                 num_workers=0,
                                 pin_memory=True)
+    test_loader = DataLoader(dataset=Test_Dataset_List[0],
+                                batch_size=1,
+                                shuffle=False,
+                                num_workers=0,
+                                pin_memory=True)
     Fuzzy_Est = []
 
     for b in test_loader:
@@ -102,7 +107,7 @@ if __name__ == '__main__':
 
     fig = plt.figure()
     data_draw1 = np.array(test_loader.dataset.get_pure_track()[:, [0, 3, 6]].detach().cpu())
-    data_draw2 = np.array(test_loader.dataset.get_noisy_track()[:, [0, 3, 6]].detach().cpu())
+    #data_draw2 = np.array(test_loader.dataset.get_noisy_track()[:, [0, 3, 6]].detach().cpu())
     #data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw4 = np.array(Fuzzy_Est_tensor[:, [0, 3, 6]].detach().cpu())
     
@@ -116,7 +121,7 @@ if __name__ == '__main__':
 
     # 三维线的数据
     draw_3D(ax,data_draw1,"real")
-    draw_3D(ax,data_draw2,"Measure(Noisy)")
+    #draw_3D(ax,data_draw2,"Measure(Noisy)")
     #draw_3D(ax, data_draw3, "real2")
     draw_3D(ax, data_draw4, "FuzzyEst")
 
