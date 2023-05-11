@@ -17,7 +17,7 @@ if __name__ == '__main__':
     from FuzzyModel.Trainer import MSETrainer
     from utils.Track_Generate import SNRNoise_Track_Dataset_Generate
     batch_size = 150
-    time_dim = 40
+    time_dim = 20
     snr_db=-25
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500

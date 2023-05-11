@@ -12,7 +12,7 @@ from PyRadarTrack.Model.FilterModel import IMMFilterModel, BasicEKFModel
 from torch.distributions.multivariate_normal import MultivariateNormal
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_dtype(torch.double)
+torch.set_default_dtype(torch.float32)
 
 
 class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
@@ -57,12 +57,11 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
         # endregion
 
         self.gen_randomTrack()
-        self.add_noise()
 
     def gen_randomTrack(self, init_point=None, div_num=10):
         if self.seed:
             np.random.seed(self.seed)
-        X0 = init_point if init_point else np.random.randn(9) * self.Scale_vector
+        X0 = np.random.randn(9) * self.Scale_vector if init_point is None else init_point
         Track = TargetFromKeyframe(self.SB)
         Track.step(X0)
         ShiftTime = np.r_[0, np.sort(np.random.choice(np.arange(self.Simulate_frame - 1), div_num)), self.Simulate_frame - 1]
@@ -72,9 +71,9 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
 
         TrackData = Track.get_real_data_all().to_numpy()           # 为了方便增量更新 TrackData是按照行进行时间堆叠即[Time,Columns]
         if self.Flag_withTime:
-            TensorTrack = torch.tensor(TrackData.T).to(device)
+            TensorTrack = torch.tensor(TrackData.T,dtype=torch.float32)
         else:
-            TensorTrack = torch.tensor(TrackData[:,:-1].T).to(device)  # 默认最后一列是timestep
+            TensorTrack = torch.tensor(TrackData[:,:-1].T,dtype=torch.float32)  # 默认最后一列是timestep
 
         self.pure_track = TensorTrack.clone().detach()
         self.noisy_track = TensorTrack                                  # 不加噪声就没有噪声。
@@ -114,11 +113,12 @@ class SNRNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             return noise
 
         dataset = copy.copy(self)
-        dataset.TensorTrack = dataset.TensorTrack + dim_noise(dataset.TensorTrack, dim=-2, snr=snr)
-        dataset.TrackData_noisy = dataset.TensorTrack
-        if self.Flag_withTime:
-            dataset.TensorTrack[:, -1] = dataset.TensorTrack[:, -1]
-            dataset.TrackData_noisy = dataset.TrackData
+        TrackData = dataset.get_pure_track()
+        dataset.noisy_track = TrackData + dim_noise(TrackData, dim=-2, snr=snr)
+        # dataset.TrackData_noisy = dataset.TrackData
+        # if self.Flag_withTime:
+        #     dataset.TrackData[:, -1] = dataset.TrackData[:, -1]
+        #     dataset.TrackData_noisy = dataset.TrackData
         return dataset
 
 
@@ -133,14 +133,15 @@ class CovarianceNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             xDim = len(self.pure_track)-1
         else:
             xDim = len(self.pure_track)
-        M = MultivariateNormal(Mean if Mean else torch.zeros(xDim).to(device), Cov if Cov else self.default_Cov)
-        noise = M.sample([self.Simulate_frame])
+        M = MultivariateNormal(Mean if Mean is not None else torch.zeros(xDim).to(device),
+                               Cov if Cov is not None else self.default_Cov)
+        noise = M.sample(torch.Size([self.Simulate_frame])).T
         if self.Flag_withTime:
-            noisy_track = self.pure_track + noise
+            noisy_track = self.pure_track[:-1] + noise
         else:
             noisy_track = self.pure_track + noise
         self.noisy_track = noisy_track.clone().detach()
-        return self.noisy_track.clone().detach()
+        return copy.copy(self)
 
 
 

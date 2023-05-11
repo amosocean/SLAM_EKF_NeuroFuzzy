@@ -15,7 +15,7 @@ if __name__ == '__main__':
     import torch.optim.lr_scheduler as lr_scheduler
     from utils.logger import rootlogger
     from FuzzyModel.Trainer import MSETrainer
-    from utils.Track_Generate import Random_Track_Dataset_Generate
+    from utils.Track_Generate import SNRNoise_Track_Dataset_Generate
     batch_size = 5000
     time_dim =45
     snr_db=-25
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     Simulate_time = 500
     Train_Dataset_List=[]
     for x in range(20):
-        dataset=Random_Track_Dataset_Generate(Simulate_time,seed=x,xWin=time_dim)
+        dataset=SNRNoise_Track_Dataset_Generate(Simulate_time,seed=x,xWin=time_dim)
         # region 规划初始点和初始速度
         X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
         dataset.gen_randomTrack(X0)
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     
     Test_Dataset_List=[]
     for x in range(667,677):
-        dataset=Random_Track_Dataset_Generate(Simulate_time,seed=x,xWin=time_dim)
+        dataset=SNRNoise_Track_Dataset_Generate(Simulate_time,seed=x,xWin=time_dim)
         # region 规划初始点和初始速度
         X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
         dataset.gen_randomTrack(X1)
