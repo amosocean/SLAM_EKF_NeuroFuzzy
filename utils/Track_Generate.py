@@ -90,7 +90,8 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         sample = self.noisy_track[:,idx:idx + self.xWin]
-        label = self.noisy_track[:,idx + self.xWin: idx + self.xWin + self.yWin]
+        # label = self.noisy_track[:,idx + self.xWin: idx + self.xWin + self.yWin]
+        label = self.pure_track[:,idx + self.xWin: idx + self.xWin + self.yWin]
         return sample, label
 
     def __len__(self):
@@ -112,14 +113,9 @@ class SNRNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             noise = torch.randn_like(input) * std * db_to_linear(snr)
             return noise
 
-        dataset = copy.copy(self)
-        TrackData = dataset.get_pure_track()
-        dataset.noisy_track = TrackData + dim_noise(TrackData, dim=-2, snr=snr)
-        # dataset.TrackData_noisy = dataset.TrackData
-        # if self.Flag_withTime:
-        #     dataset.TrackData[:, -1] = dataset.TrackData[:, -1]
-        #     dataset.TrackData_noisy = dataset.TrackData
-        return dataset
+        TrackData = self.get_pure_track()
+        self.noisy_track = TrackData + dim_noise(TrackData, dim=-2, snr=snr)
+        return copy.copy(self)
 
 
 class CovarianceNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
