@@ -50,7 +50,7 @@ if __name__ == '__main__':
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     model = LSTMNet(xDim=9, xTimeDim=time_dim,num_layers=5, hidden_size=8, yDim=9, yTimeDim=1).to(device=device)
     print(model.parameters)
-    epoch_num = 10
+    epoch_num = 30
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
