@@ -21,10 +21,10 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
-    # TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=666, xWin=time_dim)
-    # TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=667, xWin=time_dim)
-    TFK1 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=666, xWin=time_dim)
-    TFK2 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=667, xWin=time_dim)
+    TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=666, xWin=time_dim)
+    TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=667, xWin=time_dim)
+    # TFK1 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=666, xWin=time_dim)
+    # TFK2 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=667, xWin=time_dim)
     # region 规划初始点和初始速度
     X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
@@ -35,10 +35,10 @@ if __name__ == '__main__':
     #### 数据集加入噪声
     # TFK1=TFK1.add_noise(snr=-150)
     # TFK2=TFK2.add_noise(snr=-25)
-    # TFK1.add_noise(snr=-150)
-    # TFK2.add_noise(snr=-25)
-    TFK1.add_noise()
-    TFK2.add_noise()
+    TFK1.add_noise(snr=-150)
+    TFK2.add_noise(snr=-25)
+    # TFK1.add_noise()
+    # TFK2.add_noise()
     ####
 
 

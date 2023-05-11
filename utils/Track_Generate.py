@@ -114,7 +114,7 @@ class SNRNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             return noise
 
         TrackData = self.get_pure_track()
-        self.noisy_track = TrackData + dim_noise(TrackData, dim=-2, snr=snr)
+        self.noisy_track = TrackData + dim_noise(TrackData, dim=-1, snr=snr)
         return copy.copy(self)
 
 
