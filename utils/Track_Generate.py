@@ -61,7 +61,7 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
     def gen_randomTrack(self, init_point=None, div_num=10):
         if self.seed:
             np.random.seed(self.seed)
-        X0 = init_point if init_point else np.random.randn(9) * self.Scale_vector
+        X0 = np.random.randn(9) * self.Scale_vector if init_point is None else init_point
         Track = TargetFromKeyframe(self.SB)
         Track.step(X0)
         ShiftTime = np.r_[0, np.sort(np.random.choice(np.arange(self.Simulate_frame - 1), div_num)), self.Simulate_frame - 1]
@@ -133,7 +133,8 @@ class CovarianceNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             xDim = len(self.pure_track)-1
         else:
             xDim = len(self.pure_track)
-        M = MultivariateNormal(Mean if Mean else torch.zeros(xDim).to(device), Cov if Cov else self.default_Cov)
+        M = MultivariateNormal(Mean if Mean is not None else torch.zeros(xDim).to(device),
+                               Cov if Cov is not None else self.default_Cov)
         noise = M.sample(torch.Size([self.Simulate_frame])).T
         if self.Flag_withTime:
             noisy_track = self.pure_track[:-1] + noise
