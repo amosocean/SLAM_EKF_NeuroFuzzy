@@ -12,15 +12,19 @@ from PyRadarTrack.Model.FilterModel import IMMFilterModel, BasicEKFModel
 from torch.distributions.multivariate_normal import MultivariateNormal
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_dtype(torch.float32)
+torch.set_default_dtype(torch.double)
 
-class Random_Track_Dataset_Generate(torch.utils.data.Dataset):
-    Scale_vector=np.array([3000,10,1e-3]*3)
-    MovementModelMap = {"CV":"CVModel",
-                        "CT": "CTxyModel",
-                        "CA": "CAModel"}
-    def __init__(self,Simulate_frame,dt=0.1,Sigma=0.01,
-                 xWin=5,yWin=1,WithTime=False,transpose=True,seed=None):
+
+class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
+
+    Scale_vector = np.array([3000, 10, 1e-3] * 3)
+    MovementModelNameMap = {"CV": "CVModel",
+                            "CT": "CTxyModel",
+                            "CA": "CAModel"}
+
+    def __init__(self, Simulate_frame, dt=0.1, Sigma=0.01, xWin=5, yWin=5, seed=None,
+                 UsedModel=None,
+                 Flag_withTime=False):
         super().__init__()
         self.xWin = xWin
         self.yWin = yWin
@@ -110,10 +114,10 @@ class SNRNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             return noise
 
         dataset = copy.copy(self)
-        dataset.TrackData = dataset.TrackData + dim_noise(dataset.TrackData, dim=-2, snr=snr)
-        dataset.TrackData_noisy = dataset.TrackData
+        dataset.TensorTrack = dataset.TensorTrack + dim_noise(dataset.TensorTrack, dim=-2, snr=snr)
+        dataset.TrackData_noisy = dataset.TensorTrack
         if self.Flag_withTime:
-            dataset.TrackData[:, -1] = dataset.TrackData[:, -1]
+            dataset.TensorTrack[:, -1] = dataset.TensorTrack[:, -1]
             dataset.TrackData_noisy = dataset.TrackData
         return dataset
 
