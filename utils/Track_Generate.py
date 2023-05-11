@@ -57,7 +57,6 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
         # endregion
 
         self.gen_randomTrack()
-        self.add_noise()
 
     def gen_randomTrack(self, init_point=None, div_num=10):
         if self.seed:
@@ -114,11 +113,12 @@ class SNRNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             return noise
 
         dataset = copy.copy(self)
-        dataset.TrackData = dataset.TrackData + dim_noise(dataset.TrackData, dim=-2, snr=snr)
-        dataset.TrackData_noisy = dataset.TrackData
-        if self.Flag_withTime:
-            dataset.TrackData[:, -1] = dataset.TrackData[:, -1]
-            dataset.TrackData_noisy = dataset.TrackData
+        TrackData = dataset.get_pure_track()
+        dataset.noisy_track = TrackData + dim_noise(TrackData, dim=-2, snr=snr)
+        # dataset.TrackData_noisy = dataset.TrackData
+        # if self.Flag_withTime:
+        #     dataset.TrackData[:, -1] = dataset.TrackData[:, -1]
+        #     dataset.TrackData_noisy = dataset.TrackData
         return dataset
 
 
@@ -134,13 +134,13 @@ class CovarianceNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
         else:
             xDim = len(self.pure_track)
         M = MultivariateNormal(Mean if Mean else torch.zeros(xDim).to(device), Cov if Cov else self.default_Cov)
-        noise = M.sample([self.Simulate_frame])
+        noise = M.sample(torch.Size([self.Simulate_frame])).T
         if self.Flag_withTime:
-            noisy_track = self.pure_track + noise
+            noisy_track = self.pure_track[:-1] + noise
         else:
             noisy_track = self.pure_track + noise
         self.noisy_track = noisy_track.clone().detach()
-        return self.noisy_track.clone().detach()
+        return copy.copy(self)
 
 
 

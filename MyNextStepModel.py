@@ -10,7 +10,7 @@ from FuzzyModel.Decorator import *
 from config import device
 
 from torch.utils.data import DataLoader
-from utils.Track_Generate import SNRNoise_Track_Dataset_Generate
+from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
 from PyRadarTrack.Model.TorchMovementModel import TorchMovementModelFactory
 from FuzzyModel.MyModel import *
 from FuzzyModel.Trainer import MSETrainer
@@ -107,8 +107,10 @@ if __name__ == '__main__':
     # region 设计数据集
     # TFK1 = Random_Track_Dataset_Generate(Simulate_time, seed=None)
     # TFK2 = Random_Track_Dataset_Generate(Simulate_time, seed=None)
-    TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
-    TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
+    # TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
+    # TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
+    TFK1 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
+    TFK2 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
     # X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     # X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
     #
@@ -117,8 +119,9 @@ if __name__ == '__main__':
 
     # TFK1_noise=TFK1.add_noise(snr=-25)
     # TFK2_noise=TFK2.add_noise(snr=-25)
-    TFK1_noise=TFK1
-    TFK2_noise=TFK2
+    TFK1_noise=TFK1.add_noise()
+    TFK2_noise=TFK2.add_noise()
+
 
     train_loader = DataLoader(dataset=TFK1_noise,
                               batch_size=batchSize,
@@ -152,7 +155,7 @@ if __name__ == '__main__':
     for b in TFK2_noise.get_noisy_track().T:
         if Est is not None:
             loss = torch.nn.functional.mse_loss(Est, b.unsqueeze(-1))
-            print(loss)
+            # print(loss)
         Est = SW(b.unsqueeze(-1))
 
 
