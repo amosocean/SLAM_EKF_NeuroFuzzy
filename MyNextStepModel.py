@@ -10,7 +10,7 @@ from FuzzyModel.Decorator import *
 from config import device
 
 from torch.utils.data import DataLoader
-from utils.Track_Generate import Random_Track_Dataset_Generate
+from utils.Track_Generate import SNRNoise_Track_Dataset_Generate
 from PyRadarTrack.Model.TorchMovementModel import TorchMovementModelFactory
 from FuzzyModel.MyModel import *
 from FuzzyModel.Trainer import MSETrainer
@@ -107,16 +107,18 @@ if __name__ == '__main__':
     # region 设计数据集
     # TFK1 = Random_Track_Dataset_Generate(Simulate_time, seed=None)
     # TFK2 = Random_Track_Dataset_Generate(Simulate_time, seed=None)
-    TFK1 = Random_Track_Dataset_Generate(Simulate_time,seed=None,xWin=Win)
-    TFK2 = Random_Track_Dataset_Generate(Simulate_time,seed=None,xWin=Win)
+    TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
+    TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
     # X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     # X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
     #
     # TFK1.gen_randomTrack(X0)
     # TFK2.gen_randomTrack(X1)
 
-    TFK1_noise=TFK1.add_noise(snr=-25)
-    TFK2_noise=TFK2.add_noise(snr=-25)
+    # TFK1_noise=TFK1.add_noise(snr=-25)
+    # TFK2_noise=TFK2.add_noise(snr=-25)
+    TFK1_noise=TFK1
+    TFK2_noise=TFK2
 
     train_loader = DataLoader(dataset=TFK1_noise,
                               batch_size=batchSize,
@@ -147,7 +149,7 @@ if __name__ == '__main__':
     # region 效果展示
     SW = SlidingWindow(model)
     Est = None
-    for b in TFK2_noise.TrackData_noisy:
+    for b in TFK2_noise.get_noisy_track().T:
         if Est is not None:
             loss = torch.nn.functional.mse_loss(Est, b.unsqueeze(-1))
             print(loss)
@@ -163,14 +165,11 @@ if __name__ == '__main__':
     ax = plt.axes(projection='3d')
     def draw_3D(Ax, data_draw, label):
         data_draw = np.array(data_draw)
-        x = data_draw[:, 0]
-        y = data_draw[:, 1]
-        z = data_draw[:, 2]
-        Ax.plot3D(x, y, z, label=label)
+        Ax.plot3D(*data_draw, label=label)
 
-    data_draw_1 = np.array(TFK2_noise.TrackData[:,[0,3,6]].detach())
-    data_draw_2 = np.array(TFK2_noise.TrackData_noisy[:,[0,3,6]].detach())
-    data_draw_3 = np.array(SW.Est[[0,3,6],:].T.detach())
+    data_draw_1 = np.array(TFK2_noise.get_pure_track()[[0,3,6]].detach())
+    data_draw_2 = np.array(TFK2_noise.get_noisy_track()[[0,3,6]].detach())
+    data_draw_3 = np.array(SW.Est[[0,3,6]].detach())
     draw_3D(ax,data_draw_1,"True")
     draw_3D(ax,data_draw_2,"Measure")
     draw_3D(ax,data_draw_3,"Est")
@@ -180,21 +179,21 @@ if __name__ == '__main__':
     fig2 = plt.figure()
     x = torch.arange(Simulate_time)*dt
     plt.subplot(2,2,1)
-    plt.plot(x, data_draw_2[:,0],label="Measure")
-    plt.plot(x[Win-1:], data_draw_3[:, 0],label="Est")
-    plt.plot(x, data_draw_1[:,0], label="True")
+    plt.plot(x, data_draw_2[0],label="Measure")
+    plt.plot(x[Win-1:], data_draw_3[ 0],label="Est")
+    plt.plot(x, data_draw_1[0], label="True")
     plt.legend()
 
     plt.subplot(2,2,2)
-    plt.plot(x, data_draw_2[:,1],label="Measure")
-    plt.plot(x[Win-1:], data_draw_3[:, 1],label="Est")
-    plt.plot(x, data_draw_1[:,1], label="True")
+    plt.plot(x, data_draw_2[1],label="Measure")
+    plt.plot(x[Win-1:], data_draw_3[ 1],label="Est")
+    plt.plot(x, data_draw_1[1], label="True")
     plt.legend()
 
     plt.subplot(2,2,3)
-    plt.plot(x, data_draw_2[:,2],label="Measure")
-    plt.plot(x[Win-1:], data_draw_3[:, 2],label="Est")
-    plt.plot(x, data_draw_1[:,2], label="True")
+    plt.plot(x, data_draw_2[2],label="Measure")
+    plt.plot(x[Win-1:], data_draw_3[ 2],label="Est")
+    plt.plot(x, data_draw_1[2], label="True")
     plt.legend()
 
     plt.show()

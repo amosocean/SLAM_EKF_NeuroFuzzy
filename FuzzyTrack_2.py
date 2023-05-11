@@ -15,14 +15,14 @@ if __name__ == '__main__':
     import torch.optim.lr_scheduler as lr_scheduler
     from utils.logger import rootlogger
     from FuzzyModel.Trainer import MSETrainer
-    from utils.Track_Generate import Random_Track_Dataset_Generate
+    from utils.Track_Generate import SNRNoise_Track_Dataset_Generate
     batch_size = 500
     time_dim = 15
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
-    TFK1 = Random_Track_Dataset_Generate(Simulate_time,seed=666,xWin=time_dim)
-    TFK2 = Random_Track_Dataset_Generate(Simulate_time,seed=667,xWin=time_dim)
+    TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=666, xWin=time_dim)
+    TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=667, xWin=time_dim)
     # region 规划初始点和初始速度
     X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
