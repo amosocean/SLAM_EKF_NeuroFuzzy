@@ -16,7 +16,7 @@ if __name__ == '__main__':
     from utils.logger import rootlogger
     from FuzzyModel.Trainer import MSETrainer
     from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
-    batch_size = 500
+    batch_size = 5000
     time_dim = 15
     snr_db=-25
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     print(model.parameters)
-    epoch_num = 30
+    epoch_num = 5
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
