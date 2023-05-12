@@ -5,10 +5,6 @@
 # @Author    :Oliver
 import torch
 
-from FuzzyModel.FLS import *
-from FuzzyModel.Decorator import *
-from config import device
-
 from torch.utils.data import DataLoader
 from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
 from PyRadarTrack.Model.TorchMovementModel import TorchMovementModelFactory
@@ -119,16 +115,16 @@ if __name__ == '__main__':
 
     # TFK1_noise=TFK1.add_noise(snr=-25)
     # TFK2_noise=TFK2.add_noise(snr=-25)
-    TFK1_noise=TFK1.add_noise()
-    TFK2_noise=TFK2.add_noise()
+    # TFK1_noise=TFK1.add_noise()
+    # TFK2_noise=TFK2.add_noise()
 
 
-    train_loader = DataLoader(dataset=TFK1_noise,
+    train_loader = DataLoader(dataset=TFK1,
                               batch_size=batchSize,
                               shuffle=True,
                               num_workers=0,
                               pin_memory=True)
-    test_loader = DataLoader(dataset=TFK2_noise,
+    test_loader = DataLoader(dataset=TFK2,
                              batch_size=1,
                              shuffle=False,
                              num_workers=0,
@@ -152,7 +148,7 @@ if __name__ == '__main__':
     # region 效果展示
     SW = SlidingWindow(model)
     Est = None
-    for b in TFK2_noise.get_noisy_track().T:
+    for b in TFK2.get_noisy_track().T:
         if Est is not None:
             loss = torch.nn.functional.mse_loss(Est, b.unsqueeze(-1))
             # print(loss)
@@ -170,8 +166,8 @@ if __name__ == '__main__':
         data_draw = np.array(data_draw)
         Ax.plot3D(*data_draw, label=label)
 
-    data_draw_1 = np.array(TFK2_noise.get_pure_track()[[0,3,6]].detach())
-    data_draw_2 = np.array(TFK2_noise.get_noisy_track()[[0,3,6]].detach())
+    data_draw_1 = np.array(TFK2.get_pure_track()[[0,3,6]].detach())
+    data_draw_2 = np.array(TFK2.get_noisy_track()[[0,3,6]].detach())
     data_draw_3 = np.array(SW.Est[[0,3,6]].detach())
     draw_3D(ax,data_draw_1,"True")
     draw_3D(ax,data_draw_2,"Measure")
