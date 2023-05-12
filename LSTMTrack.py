@@ -95,30 +95,28 @@ if __name__ == '__main__':
 
     Fuzzy_Est_tensor = torch.stack(Fuzzy_Est)
 
-    # region [+]绘图
+   # region [+]绘图
     from mpl_toolkits import mplot3d
     import matplotlib.pyplot as plt
     import numpy as np
 
-    fig = plt.figure()
-    data_draw1 = np.array(test_loader.dataset.get_pure_track()[:, [0, 3, 6]].detach().cpu())
-    data_draw2 = np.array(test_loader.dataset.get_noisy_track()[:, [0, 3, 6]].detach().cpu())
-    #data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
-    data_draw4 = np.array(Fuzzy_Est_tensor[:, [0, 3, 6]].detach().cpu())
-    
 
+    data_draw1 = np.array(test_loader.dataset.get_pure_track()[[0, 3, 6]].detach().cpu())
+    data_draw2 = np.array(test_loader.dataset.get_noisy_track()[[0, 3, 6]].detach().cpu())
+    #data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
+    data_draw4 = np.array(Fuzzy_Est_tensor[:,[0, 3, 6]].T.detach().cpu())
+    fig = plt.figure()
     ax = plt.axes(projection='3d')
 
-
     def draw_3D(Ax, data_draw, label):
-        Ax.plot3D(data_draw[:, 0], data_draw[:, 1], data_draw[:, 2], label=label)
+        Ax.plot3D(*data_draw, label=label)
 
 
     # 三维线的数据
     draw_3D(ax,data_draw1,"real")
     draw_3D(ax,data_draw2,"Measure(Noisy)")
     #draw_3D(ax, data_draw3, "real2")
-    draw_3D(ax, data_draw4, "LSTMEst")
+    draw_3D(ax, data_draw4, "FuzzyEst")
 
     plt.legend()
     plt.show()
