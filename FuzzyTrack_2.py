@@ -11,60 +11,81 @@ if __name__ == '__main__':
     from FuzzyModel.FLS import FormalNorm_layer
     from FuzzyModel.MyModel import AdoptTimeFLSLayer,AdoptTimeFLSLayer_Dense,PackingAdoptTimeFLSLayer
     import torch
-    from torch.utils.data import DataLoader
+    from torch.utils.data import DataLoader,ConcatDataset
     import torch.optim.lr_scheduler as lr_scheduler
     from utils.logger import rootlogger
     from FuzzyModel.Trainer import MSETrainer
     from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
-    batch_size = 500
+    batch_size = 5000
     time_dim = 15
-
+    snr_db=-25
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
-    TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=666, xWin=time_dim)
-    TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=667, xWin=time_dim)
-    # TFK1 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=666, xWin=time_dim)
-    # TFK2 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=667, xWin=time_dim)
-    # region 规划初始点和初始速度
-    X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
-    X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
-    TFK1.gen_randomTrack(X0)
-    TFK2.gen_randomTrack(X1)
-    # endregion
     
-    #### 数据集加入噪声
-    # TFK1=TFK1.add_noise(snr=-150)
+    Train_Dataset_List=[]
+    for x in range(20):
+        dataset=SNRNoise_Track_Dataset_Generate(Simulate_time,seed=x,xWin=time_dim)
+        # region 规划初始点和初始速度
+        X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
+        dataset.gen_randomTrack(X0)
+        # endregion
+        #### 数据集加入噪声
+        dataset=dataset.add_noise(snr=snr_db)
+        ####
+        Train_Dataset_List.append(dataset)
+    
+    Test_Dataset_List=[]
+    for x in range(667,677):
+        dataset=SNRNoise_Track_Dataset_Generate(Simulate_time,seed=x,xWin=time_dim)
+        # region 规划初始点和初始速度
+        X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
+        dataset.gen_randomTrack(X1)
+        # endregion
+        #### 数据集加入噪声
+        dataset=dataset.add_noise(snr=snr_db)
+        ####
+        Test_Dataset_List.append(dataset)
+    
+    TFK1=ConcatDataset(Train_Dataset_List)
+    TFK2=ConcatDataset(Test_Dataset_List)
+    # TFK1 = Random_Track_Dataset_Generate(Simulate_time,seed=666,xWin=time_dim)
+    # TFK2 = Random_Track_Dataset_Generate(Simulate_time,seed=667,xWin=time_dim)
+
+    # #### 数据集加入噪声
+    # TFK1=TFK1.add_noise(snr=-25)
     # TFK2=TFK2.add_noise(snr=-25)
-    TFK1.add_noise(snr=-150)
-    TFK2.add_noise(snr=-25)
-    # TFK1.add_noise()
-    # TFK2.add_noise()
-    ####
+    # ####
 
 
     train_loader = DataLoader(dataset=TFK1,
                               batch_size=batch_size,
-                              shuffle=False,
+                              shuffle=True,
                               num_workers=0,
                               pin_memory=True)
     test_loader = DataLoader(dataset=TFK2,
-                             batch_size=1,
+                             batch_size=batch_size,
                              shuffle=False,
                              num_workers=0,
                              pin_memory=True)
     # A = Test(tensor_real_data[:time_dim])
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
-    model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
+    model = AdoptTimeFLSLayer_Dense(9, time_dim, 64, 9, 1).to(device=device)
     print(model.parameters)
-    epoch_num = 100
+    epoch_num = 5
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,200,400,600], gamma=0.5)
+    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
     rootlogger('Train_FuzzyTrack')
     Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                        lrScheduler=scheduler,logName='Train_FuzzyTrack')
 
-    train_loss, test_loss = Train.run(epoch_num, div=50, show_loss=True)
+    train_loss, test_loss = Train.run(epoch_num, div=5, show_loss=True)
+
+    test_loader = DataLoader(dataset=Test_Dataset_List[0],
+                                batch_size=1,
+                                shuffle=False,
+                                num_workers=0,
+                                pin_memory=True)
 
     Fuzzy_Est = []
 

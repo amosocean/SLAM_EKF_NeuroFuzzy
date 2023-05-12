@@ -5,4 +5,4 @@
 # @Author    :Oliver
 import torch
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_dtype(torch.double)
+torch.set_default_dtype(torch.float32)

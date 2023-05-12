@@ -12,7 +12,7 @@ from PyRadarTrack.Model.FilterModel import IMMFilterModel, BasicEKFModel
 from torch.distributions.multivariate_normal import MultivariateNormal
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_dtype(torch.double)
+torch.set_default_dtype(torch.float32)
 
 
 class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
@@ -71,9 +71,9 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
 
         TrackData = Track.get_real_data_all().to_numpy()           # 为了方便增量更新 TrackData是按照行进行时间堆叠即[Time,Columns]
         if self.Flag_withTime:
-            TensorTrack = torch.tensor(TrackData.T).to(device)
+            TensorTrack = torch.tensor(TrackData.T,dtype=torch.float32)
         else:
-            TensorTrack = torch.tensor(TrackData[:,:-1].T).to(device)  # 默认最后一列是timestep
+            TensorTrack = torch.tensor(TrackData[:,:-1].T,dtype=torch.float32)  # 默认最后一列是timestep
 
         self.pure_track = TensorTrack.clone().detach()
         self.noisy_track = TensorTrack                                  # 不加噪声就没有噪声。
