@@ -79,7 +79,7 @@ if __name__ == '__main__':
                              pin_memory=True)
     # A = Test(tensor_real_data[:time_dim])
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
-    model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
+    model = AdoptTimeFLSLayer_Dense(9, time_dim, 64, 9, 1).to(device=device)
     print(model.parameters)
     epoch_num = 5
     learning_rate = 0.01

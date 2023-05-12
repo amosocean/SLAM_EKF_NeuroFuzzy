@@ -160,13 +160,13 @@ class AdoptTimeFLSLayer_Dense(BasicTimeSeriesModel):
         #self.fc1=torch.nn.Linear(yDim,yDim)
         self.dense2=torch.nn.Sequential(
             torch.nn.Conv1d(in_channels=yDim,out_channels=36,kernel_size=yTimeDim,stride=1,padding=0),
-            torch.nn.LayerNorm((36,1)),
+            torch.nn.BatchNorm1d(36),
             torch.nn.ReLU(),
             torch.nn.Conv1d(in_channels=36,out_channels=72,kernel_size=yTimeDim,stride=1,padding=0),
-            torch.nn.LayerNorm((72,1)),
+            torch.nn.BatchNorm1d(72),
             torch.nn.ReLU(),
             torch.nn.Conv1d(in_channels=72,out_channels=36,kernel_size=yTimeDim,stride=1,padding=0),
-            torch.nn.LayerNorm((36,1)),
+            torch.nn.BatchNorm1d(36),
             torch.nn.ReLU(),
             torch.nn.Conv1d(in_channels=36,out_channels=yDim,kernel_size=yTimeDim,stride=1,padding=0),
             )
@@ -194,13 +194,13 @@ class Dense_AdoptTimeFLSLayer(BasicTimeSeriesModel):
         #self.fc1=torch.nn.Linear(yDim,yDim)
         self.dense2=torch.nn.Sequential(
             torch.nn.Conv1d(in_channels=yDim,out_channels=36,kernel_size=yTimeDim,stride=1,padding=0),
-            torch.nn.LayerNorm((36,1)),
+            torch.nn.BatchNorm1d(36),
             torch.nn.ReLU(),
             torch.nn.Conv1d(in_channels=36,out_channels=72,kernel_size=yTimeDim,stride=1,padding=0),
-            torch.nn.LayerNorm((72,1)),
+            torch.nn.BatchNorm1d(72),
             torch.nn.ReLU(),
             torch.nn.Conv1d(in_channels=72,out_channels=36,kernel_size=yTimeDim,stride=1,padding=0),
-            torch.nn.LayerNorm((36,1)),
+            torch.nn.BatchNorm1d(36),
             torch.nn.ReLU(),
             torch.nn.Conv1d(in_channels=36,out_channels=yDim,kernel_size=yTimeDim,stride=1,padding=0),
             )
