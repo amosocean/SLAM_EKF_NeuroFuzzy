@@ -80,8 +80,15 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
         self.noisy_track = TensorTrack                                  # 不加噪声就没有噪声。
         return TensorTrack
 
-    def normalize():
-        self.Gama=
+    def normalize(self):  #采用Min-Max归一化
+        assert self.Flag_Noisy, "建议归一化前加入噪声"
+        indices = torch.tensor([0, 3, 6])  # 第1行、第4行和第7行的索引(x,y,z位移的索引)
+        selected_rows = torch.index_select(self.noisy_track, dim=0, index=indices)
+        self.max_value = torch.max(selected_rows) #求x,y,z最大值
+        self.min_value = torch.min(selected_rows) #求x,y,z最小值
+        self.noisy_track=(self.noisy_track-self.min_value)/(self.max_value-self.min_value)
+        self.pure_track= (self.pure_track-self.min_value)/(self.max_value-self.min_value)
+        return self
 
     def add_noise(self,*args,**kwargs):
         return self.noisy_track
