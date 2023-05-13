@@ -30,7 +30,7 @@ if __name__ == '__main__':
         dataset.gen_randomTrack(X0)
         # endregion
         #### 数据集加入噪声
-        dataset=dataset.add_noise(snr=snr_db)
+        dataset=dataset.add_noise(snr=snr_db).normalize()
         ####
         Train_Dataset_List.append(dataset)
     
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         dataset.gen_randomTrack(X1)
         # endregion
         #### 数据集加入噪声
-        dataset=dataset.add_noise(snr=snr_db)
+        dataset=dataset.add_noise(snr=snr_db).normalize()
         ####
         Test_Dataset_List.append(dataset)
     

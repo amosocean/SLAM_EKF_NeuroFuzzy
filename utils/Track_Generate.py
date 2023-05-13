@@ -31,6 +31,7 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
         self.seed = seed
         self.Simulate_frame = Simulate_frame
         self.Flag_withTime = Flag_withTime
+        self.Flag_Noisy = False
         # self.Flag_transpose = Flag_transpose
 
         # region --准备运动模型
@@ -79,6 +80,16 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
         self.noisy_track = TensorTrack                                  # 不加噪声就没有噪声。
         return TensorTrack
 
+    def normalize(self):  #采用Min-Max归一化
+        assert self.Flag_Noisy, "建议归一化前加入噪声"
+        indices = torch.tensor([0, 3, 6])  # 第1行、第4行和第7行的索引(x,y,z位移的索引)
+        selected_rows = torch.index_select(self.noisy_track, dim=0, index=indices)
+        self.max_value = torch.max(selected_rows) #求x,y,z最大值
+        self.min_value = torch.min(selected_rows) #求x,y,z最小值
+        self.noisy_track=(self.noisy_track-self.min_value)/(self.max_value-self.min_value)
+        self.pure_track= (self.pure_track-self.min_value)/(self.max_value-self.min_value)
+        return self
+
     def add_noise(self,*args,**kwargs):
         return self.noisy_track
 
@@ -99,22 +110,23 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
 
 class SNRNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
     def __init__(self,Simulate_frame, dt=0.1, Sigma=0.01,
-                 xWin=5, yWin=1, WithTime=False, transpose=True, seed=None):
+                 xWin=5, yWin=1,noise_snr=None, WithTime=False, transpose=True, seed=None):
         super().__init__(Simulate_frame,dt,Sigma,xWin,yWin,seed=seed,Flag_withTime=WithTime)
 
     def add_noise(self, snr=0):
+        if not self.Flag_Noisy:
+            def dim_noise(input: torch.Tensor, dim: int, snr=0) -> torch.Tensor:
+                def db_to_linear(db_value):
+                    linear_value = 10 ** (db_value / 20)
+                    return linear_value
 
-        def dim_noise(input: torch.Tensor, dim: int, snr=0) -> torch.Tensor:
-            def db_to_linear(db_value):
-                linear_value = 10 ** (db_value / 20)
-                return linear_value
+                std = torch.std(input, dim=dim, keepdim=True)
+                noise = torch.randn_like(input) * std * db_to_linear(snr)
+                return noise
 
-            std = torch.std(input, dim=dim, keepdim=True)
-            noise = torch.randn_like(input) * std * db_to_linear(snr)
-            return noise
-
-        TrackData = self.get_pure_track()
-        self.noisy_track = TrackData + dim_noise(TrackData, dim=-1, snr=snr)
+            TrackData = self.get_pure_track()
+            self.noisy_track = TrackData + dim_noise(TrackData, dim=-1, snr=snr)
+            self.Flag_Noisy = True
         return copy.copy(self)
 
 
@@ -138,6 +150,12 @@ class CovarianceNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             noisy_track = self.pure_track + noise
         self.noisy_track = noisy_track.clone().detach()
         return copy.copy(self)
+    
+
+class SNRNoise_Track_Dataset_Normalized(SNRNoise_Track_Dataset_Generate):
+    def __init__(self,Simulate_frame, dt=0.1, Sigma=0.01,
+                 xWin=5, yWin=1, WithTime=False, transpose=True, seed=None):
+        super(SNRNoise_Track_Dataset_Normalized,self).__init__(Simulate_frame,dt,Sigma,xWin,yWin,seed=seed,Flag_withTime=WithTime)
 
 
 
