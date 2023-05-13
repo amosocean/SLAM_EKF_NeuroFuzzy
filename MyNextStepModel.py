@@ -155,7 +155,6 @@ if __name__ == '__main__':
         Est = SW(b.unsqueeze(-1))
 
 
-
     import matplotlib.pyplot as plt
     from mpl_toolkits import mplot3d
     import numpy as np
@@ -175,6 +174,7 @@ if __name__ == '__main__':
 
     plt.legend()
     plt.show()
+
     fig2 = plt.figure()
     x = torch.arange(Simulate_time)*dt
     plt.subplot(2,2,1)

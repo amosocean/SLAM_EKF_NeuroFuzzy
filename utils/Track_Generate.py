@@ -8,6 +8,7 @@ import torch
 import numpy as np
 from PyRadarTrack.Model import *
 from PyRadarTrack.Simulate import *
+from torch.utils.data import DataLoader
 from PyRadarTrack.Model.FilterModel import IMMFilterModel, BasicEKFModel
 from torch.distributions.multivariate_normal import MultivariateNormal
 
@@ -54,7 +55,8 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
 
         # region-- 初始化中间变量
         self.pure_track = None
-        self.noisy_track=None
+        self.noisy_track = None
+        self.ModelLabel = []
         # endregion
 
         self.gen_randomTrack()
@@ -62,13 +64,16 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
     def gen_randomTrack(self, init_point=None, div_num=10):
         if self.seed:
             np.random.seed(self.seed)
+        self.ModelLabel.clear()
         X0 = np.random.randn(9) * self.Scale_vector if init_point is None else init_point
         Track = TargetFromKeyframe(self.SB)
         Track.step(X0)
         ShiftTime = np.r_[0, np.sort(np.random.choice(np.arange(self.Simulate_frame - 1), div_num)), self.Simulate_frame - 1]
         StayTime = ShiftTime[1:] - ShiftTime[:-1]
         for time in StayTime:
-            Track.run_Model(np.random.choice(self.MovementModels), time)
+            ModelID = np.random.choice(np.arange(len(self.MovementModels)))
+            Track.run_Model(self.MovementModels[ModelID], time)
+            self.ModelLabel.extend([ModelID]*time)
 
         TrackData = Track.get_real_data_all().to_numpy()           # 为了方便增量更新 TrackData是按照行进行时间堆叠即[Time,Columns]
         if self.Flag_withTime:
@@ -91,13 +96,16 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
         return self
 
     def add_noise(self,*args,**kwargs):
-        return self.noisy_track
+        return self
 
     def get_pure_track(self):
         return self.pure_track.clone().detach()
 
     def get_noisy_track(self):
         return self.noisy_track.clone().detach()
+
+    def get_model_label(self):
+        return torch.tensor(self.ModelLabel)
 
     def __getitem__(self, idx):
         sample = self.noisy_track[:,idx:idx + self.xWin]
@@ -110,8 +118,8 @@ class Basic_Track_Dataset_Generate(torch.utils.data.Dataset):
 
 class SNRNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
     def __init__(self,Simulate_frame, dt=0.1, Sigma=0.01,
-                 xWin=5, yWin=1,noise_snr=None, WithTime=False, transpose=True, seed=None):
-        super().__init__(Simulate_frame,dt,Sigma,xWin,yWin,seed=seed,Flag_withTime=WithTime)
+                 xWin=5, yWin=1,noise_snr=None, WithTime=False,UsedModel=None, transpose=True, seed=None):
+        super().__init__(Simulate_frame,dt,Sigma,xWin,yWin, UsedModel=UsedModel, seed=seed, Flag_withTime=WithTime)
 
     def add_noise(self, snr=0):
         if not self.Flag_Noisy:
@@ -127,14 +135,14 @@ class SNRNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
             TrackData = self.get_pure_track()
             self.noisy_track = TrackData + dim_noise(TrackData, dim=-1, snr=snr)
             self.Flag_Noisy = True
-        return copy.copy(self)
+        return self
 
 
 class CovarianceNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
     default_Cov = torch.diag(torch.tensor([1e1,1e-2,1e-4]*3))
     def __init__(self,Simulate_frame, dt=0.1, Sigma=0.01,
-                 xWin=5, yWin=1, WithTime=False, transpose=True, seed=None):
-        super().__init__(Simulate_frame,dt,Sigma,xWin,yWin,seed=seed,Flag_withTime=WithTime)
+                 xWin=5, yWin=1,UsedModel=None, WithTime=False, transpose=True, seed=None):
+        super().__init__(Simulate_frame,dt,Sigma,xWin,yWin,UsedModel=UsedModel,seed=seed,Flag_withTime=WithTime)
 
     def add_noise(self,Cov=None,Mean=None):
         if self.Flag_withTime:
@@ -149,13 +157,13 @@ class CovarianceNoise_Track_Dataset_Generate(Basic_Track_Dataset_Generate):
         else:
             noisy_track = self.pure_track + noise
         self.noisy_track = noisy_track.clone().detach()
-        return copy.copy(self)
-    
+        return self
+
 
 class SNRNoise_Track_Dataset_Normalized(SNRNoise_Track_Dataset_Generate):
     def __init__(self,Simulate_frame, dt=0.1, Sigma=0.01,
                  xWin=5, yWin=1, WithTime=False, transpose=True, seed=None):
-        super(SNRNoise_Track_Dataset_Normalized,self).__init__(Simulate_frame,dt,Sigma,xWin,yWin,seed=seed,Flag_withTime=WithTime)
+        super(SNRNoise_Track_Dataset_Normalized,self).__init__(Simulate_frame,dt,Sigma,xWin,yWin,seed=seed, Flag_withTime=WithTime)
 
 
 
