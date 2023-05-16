@@ -21,7 +21,7 @@ def _gen_path(root, leaf, filename):
     return os.path.join(TheDir,filename)
 
 
-def Path_OutputDir(filename,leaf_dir=""):
+def Path_OutputDir(filename="", leaf_dir=""):
     return _gen_path(OUTPUT_ROOT_DIR, leaf_dir, filename)
     # dir = os.path.join(OUTPUT_ROOT_DIR, leaf_dir)
     # if not os.path.exists(dir):
@@ -29,7 +29,7 @@ def Path_OutputDir(filename,leaf_dir=""):
     # return os.path.join(dir, filename)
 
 
-def Path_OutputModelDir(filename,leaf_dir=""):
+def Path_OutputModelDir(filename="", leaf_dir=""):
     return _gen_path(OUTPUT_MODEL_DIR, leaf_dir, filename)
     # dir = os.path.join(OUTPUT_MODEL_DIR, leaf_dir)
     # if not os.path.exists(dir):
@@ -37,7 +37,7 @@ def Path_OutputModelDir(filename,leaf_dir=""):
     # return os.path.join(dir, filename)
 
 
-def Path_LogDir(filename,leaf_dir=""):
+def Path_LogDir(filename="", leaf_dir=""):
     return _gen_path(LOG_ROOT_DIR, leaf_dir, filename)
     # dir = os.path.join(LOG_ROOT_DIR, leaf_dir)
     # if not os.path.exists(dir):

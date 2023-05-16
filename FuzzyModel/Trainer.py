@@ -9,9 +9,9 @@ import torch
 import torch.nn.functional as F
 from matplotlib import pyplot as plt
 import numpy as np
-import gif
-from config import device
-
+import gif,os,json
+from config import *
+from FuzzyModel.MyModel import *
 class BasicTrainer(object):
     device = device
 
@@ -114,6 +114,7 @@ class BasicTrainer(object):
     def show(self):
         fig = self.drawLossFig()
         fig.show()
+
     def drawLossFig(self):
         train_loss, test_loss = self.train_loss,self.test_loss
         fig = plt.figure()
@@ -160,6 +161,27 @@ class BasicTrainer(object):
             frame.append(of)
         frame[0].save(File_Path, save_all=True, loop=True, append_images=frame[1:],
                       duration=750, disposal=2)
+
+    def ModelSave(self,SaveDir,ModelName="model"):
+        SaveDir = Path_OutputModelDir("",SaveDir)
+        Model_save_path = os.path.join(SaveDir, f"{ModelName}.pt")
+        Json_save_path = os.path.join(SaveDir,f"{ModelName}_config.json")
+        torch.save(self.model.state_dict(), Model_save_path)
+
+        with open(Json_save_path,"w") as F:
+            json.dump({"model_class": self.model.__class__.__name__,
+                       "state_dict_path": Model_save_path,
+                       "para":self.model.get_init_para()},F)
+        return Json_save_path
+    @staticmethod
+    def LoadModelByJson(json_path):
+        with open(json_path,'r') as F:
+            data = json.load(F)
+        ModelClassName,Parameters_path,InitPara=data["model_class"],data["state_dict_path"],data["para"]
+        model = eval(f"{ModelClassName}(**{InitPara})")
+        model.to(device)
+        model.load_state_dict(torch.load(Parameters_path))
+        return model
 
 
 class MSETrainer(BasicTrainer):

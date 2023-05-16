@@ -15,10 +15,11 @@ console_log_format = '%(asctime)s - %(name)s[line:%(lineno)d] - %(levelname)s: %
 
 class rootlogger(object):
     def __init__(self, logName):
+        self.log_StartTime = getStrTime()
         self.log = logging.getLogger(logName)
         self.log.setLevel("DEBUG")
         self.add_stream_Handler()
-        self.log_filename = Path_LogDir("{}_LOG_{}.log".format(logName, getStrTime()), getStrTime(True, False))
+        self.log_filename = Path_LogDir("{}_LOG_{}.log".format(logName, self.log_StartTime), getStrTime(True, False))
         self.add_file_Handler(self.log_filename)
 
     def silence(self):
@@ -41,6 +42,7 @@ class rootlogger(object):
 
 class MarkdownEditor(object):
     def __init__(self):
+        self.log_StartTime = ""
         self.log_path=None
         self.save_path = None
         self.source_dir = None
@@ -48,6 +50,7 @@ class MarkdownEditor(object):
         self.data = "## This is a detail log..\n"
 
     def init_By_logger(self,logger:rootlogger):
+        self.log_StartTime = logger.log_StartTime
         NewDir = logger.log_filename[:-4]
         self.save_path = os.path.join(NewDir,"log.md")
         self.source_dir = os.path.join(NewDir,"source")

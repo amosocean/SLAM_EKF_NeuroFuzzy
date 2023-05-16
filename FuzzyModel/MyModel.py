@@ -8,34 +8,61 @@ import torch.nn as nn
 from FuzzyModel.FLS import *
 from FuzzyModel.Decorator import *
 from .config import device
+
 class BasicModel(torch.nn.Module):
-    def __init__(self,xDim,rule_num,yDim=1):
+    Ignore_name=["self",'__class__']
+    def __init__(self, **kwargs):
         super().__init__()
-        self.xDim=xDim
-        self.rule_num = rule_num
-        self.yDim=yDim
+        self._unfold(kwargs)
+        for ignore in self.Ignore_name:
+            if ignore in kwargs.keys():
+                kwargs.pop(ignore)
+        self.para_dict = kwargs
+
+    def _unfold(self, dict, keyword="kwargs"):
+        if keyword in dict:
+            dict.update(dict.pop(keyword))
+            self._unfold(dict, keyword)
+
     def quick_eval(self,*args):
         return self(torch.tensor(args,device=device))
     def forward(self,x):
         return x
+    def get_init_para(self):
+        for key in self.para_dict.keys():
+            self.para_dict[key] = self.__getattribute__(key)
+        return self.para_dict
+    def _init_para_update(self,**kwargs):
+        self.para_dict.update(kwargs)
 
-class BasicTimeSeriesModel(torch.nn.Module):
-    def __init__(self, xDim,xTimeDim,rule_num,yDim,yTimeDim):
-        super().__init__()
+class BasicOneStepModel(BasicModel):
+    def __init__(self,xDim,rule_num,yDim=1,**kwargs):
+        super().__init__(kwargs=dict(locals(),**kwargs))
+        self.xDim = xDim
+        self.rule_num = rule_num
+        self.yDim = yDim
+    # def quick_eval(self,*args):
+    #     return self(torch.tensor(args,device=device))
+    # def forward(self,x):
+    #     return x
+
+class BasicTimeSeriesModel(BasicModel):
+    def __init__(self, xDim,xTimeDim,rule_num,yDim,yTimeDim,**kwargs):
+        super().__init__(kwargs=dict(locals(),**kwargs))
         self.xDim = xDim
         self.xTimeDim=xTimeDim
         self.rule_num=rule_num
         self.yDim=yDim
         self.yTimeDim = yTimeDim
-    def quick_eval(self,*args):
-        return self(torch.tensor(args,device=device))
-    def forward(self,x):
-        return x
+    # def quick_eval(self,*args):
+    #     return self(torch.tensor(args,device=device))
+    # def forward(self,x):
+    #     return x
 
 @scale()
-class FLSLayer(BasicModel):
+class FLSLayer(BasicOneStepModel):
     def __init__(self,xDim,rule_num,yDim=1):
-        super().__init__(xDim,rule_num)
+        super().__init__(xDim,rule_num,yDim=1)
         self.Fuzzifier = FuzzifierLayer(xDim)
         self.Inference = GaussianInferenceLayer(xDim,rule_num)
         self.Defuzzifier = HeightDefuzzifierLayer(rule_num,yDim)
@@ -48,7 +75,7 @@ class FLSLayer(BasicModel):
         return input
 
 @scale()
-class TSFLSLayer(BasicModel):
+class TSFLSLayer(BasicOneStepModel):
     def __init__(self,xDim,rule_num):
         super().__init__(xDim,rule_num)
         self.Fuzzifier = FuzzifierLayer(xDim)
@@ -63,7 +90,7 @@ class TSFLSLayer(BasicModel):
         return input
 
 @scale()
-class TrapFLSLayer(BasicModel):
+class TrapFLSLayer(BasicOneStepModel):
     def __init__(self,xDim,rule_num):
         super().__init__(xDim,rule_num)
         self.Fuzzifier = FuzzifierLayer(xDim)
@@ -78,7 +105,7 @@ class TrapFLSLayer(BasicModel):
         return input
 
 @scale()
-class StrictlyTrapFLSLayer(BasicModel):
+class StrictlyTrapFLSLayer(BasicOneStepModel):
     def __init__(self,xDim,rule_num):
         super().__init__(xDim,rule_num)
         self.Fuzzifier = FuzzifierLayer(xDim)
@@ -93,7 +120,7 @@ class StrictlyTrapFLSLayer(BasicModel):
         return input
 
 @scale()
-class TwoHalfTrapFLSLayer(BasicModel):
+class TwoHalfTrapFLSLayer(BasicOneStepModel):
     def __init__(self,xDim,rule_num):
         super().__init__(xDim,rule_num)
         self.Fuzzifier = FuzzifierLayer(xDim)
@@ -234,4 +261,7 @@ class LSTMNet(BasicLSTMNet):
         super(LSTMNet,self).__init__(input_size=xDim, hidden_size=hidden_size, num_layers=num_layers, output_size=yDim)
         self.NormPack = NormalizePacking(self.forward,xTimeDim)
         self.forward = self.NormPack.forward
+
+
+
 

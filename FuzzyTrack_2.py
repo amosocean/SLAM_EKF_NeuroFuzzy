@@ -6,6 +6,8 @@
 
 import numpy as np
 
+from config import getStrTime
+
 if __name__ == '__main__':
 
     from FuzzyModel.FLS import FormalNorm_layer
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                        lrScheduler=scheduler,logName='Train_FuzzyTrack')
 
-    Train.run(epoch_num, div=5, show_loss=True)
+    Train.run(epoch_num, div=5, show_loss=False)
 
     ME.add_figure("lossPic.png",figData=Train.drawLossFig(),
                   describe="### The loss of last epoch.")
@@ -128,4 +130,8 @@ if __name__ == '__main__':
     # endregion
 
     ME.saveMD()
+    if input("\n[!]是否保存模型？[y/n]") == "y":
+        savePath = Train.ModelSave(ME.log_StartTime)
+        print(f"Saved to {savePath} ...")
 
+    # model = MSETrainer.LoadModelByJson(savePath)
