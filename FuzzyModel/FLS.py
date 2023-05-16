@@ -175,14 +175,12 @@ class NormalizePacking(BasicPacking):
         self.eps=eps
         self.Gama = torch.nn.Parameter(torch.ones(shape, device=device))
         self.Beta = torch.nn.Parameter(torch.zeros(shape, device=device))
-        self.Norm1=torch.nn.LayerNorm(normalized_shape=shape)
     def __call__(self, x):
         self.forward(x)
 
     def forward(self, x):
         var, mean = (torch.var_mean(x, dim=-1,keepdim=True))
-        #x = ((x - mean) / torch.sqrt(var + self.eps)) * self.Gama + self.Beta
-        rtn=self.Norm1(x)
+        x = ((x - mean) / torch.sqrt(var + self.eps)) * self.Gama + self.Beta
         rtn = super().__call__(x)
         return rtn * var + mean
 
