@@ -13,7 +13,7 @@ if __name__ == '__main__':
     import torch
     from torch.utils.data import DataLoader,ConcatDataset
     import torch.optim.lr_scheduler as lr_scheduler
-    from utils.logger import rootlogger
+    from utils.logger import rootlogger,MarkdownEditor
     from FuzzyModel.Trainer import MSETrainer
     from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
     batch_size = 5000
@@ -75,11 +75,14 @@ if __name__ == '__main__':
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
-    rootlogger('Train_FuzzyTrack')
+    ME = MarkdownEditor().init_By_logger(rootlogger('Train_FuzzyTrack'))
     Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                        lrScheduler=scheduler,logName='Train_FuzzyTrack')
 
-    train_loss, test_loss = Train.run(epoch_num, div=5, show_loss=True)
+    Train.run(epoch_num, div=5, show_loss=True)
+
+    ME.add_figure("lossPic.png",figData=Train.drawLossFig(),
+                  describe="### The loss of last epoch.")
 
     test_loader = DataLoader(dataset=Test_Dataset_List[0],
                                 batch_size=1,
@@ -120,5 +123,9 @@ if __name__ == '__main__':
     draw_3D(ax, data_draw4, "FuzzyEst")
 
     plt.legend()
+    ME.add_figure("1.png",fig)
     plt.show()
     # endregion
+
+    ME.saveMD()
+

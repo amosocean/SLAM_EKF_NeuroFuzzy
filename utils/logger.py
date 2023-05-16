@@ -11,13 +11,15 @@ from config import *
 
 file_log_format = '%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
 console_log_format = '%(asctime)s - %(name)s[line:%(lineno)d] - %(levelname)s: %(message)s'
+
+
 class rootlogger(object):
     def __init__(self, logName):
         self.log = logging.getLogger(logName)
         self.log.setLevel("DEBUG")
         self.add_stream_Handler()
-        log_filename = Path_LogDir("{}_LOG_{}.log".format(logName, getStrTime()), getStrTime(True, False))
-        self.add_file_Handler(log_filename)
+        self.log_filename = Path_LogDir("{}_LOG_{}.log".format(logName, getStrTime()), getStrTime(True, False))
+        self.add_file_Handler(self.log_filename)
 
     def silence(self):
         self.log.setLevel(100)
@@ -37,33 +39,53 @@ class rootlogger(object):
         self.log.addHandler(handler)
 
 
-    # def __getattr__(self, item):
-    #     if item in dir(self.log):
-    #         return self.log.__getattr__(item)
-    #     else:
-    #         super().__getattr__(item)
+class MarkdownEditor(object):
+    def __init__(self):
+        self.log_path=None
+        self.save_path = None
+        self.source_dir = None
+        # self.data = ""
+        self.data = "## This is a detail log..\n"
 
+    def init_By_logger(self,logger:rootlogger):
+        NewDir = logger.log_filename[:-4]
+        self.save_path = os.path.join(NewDir,"log.md")
+        self.source_dir = os.path.join(NewDir,"source")
+        if not os.path.exists(NewDir):
+            os.makedirs(NewDir)
+            os.makedirs(self.source_dir)
+        return self
 
-# class Logger(object):
-#     level_relations = {
-#         'debug':logging.DEBUG,
-#         'info':logging.INFO,
-#         'warning':logging.WARNING,
-#         'error':logging.ERROR,
-#         'crit':logging.CRITICAL
-#     }#日志级别关系映射
-#
-#     def __init__(self,filename,level='info',when='midnight',backCount=3,
-#                  fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
-#         self.logger = logging.getLogger(filename)
-#         format_str = logging.Formatter(fmt)#设置日志格式
-#         self.logger.setLevel(self.level_relations.get(level))#设置日志级别
-#         sh = logging.StreamHandler()#往屏幕上输出
-#         sh.setFormatter(format_str) #设置屏幕上显示的格式
-#         th = handlers.TimedRotatingFileHandler(filename=filename,when=when,backupCount=backCount,encoding='utf-8')#往文件里写入#指定间隔时间自动生成文件的处理器
-#         th.setFormatter(format_str)#设置文件里写入的格式
-#         self.logger.addHandler(sh) #把对象加到logger里
-#         self.logger.addHandler(th)
+    def add_line(self,Str:str):
+        self.data += Str + "\n"
+        return self
+    def add_figure(self, Fig_filename, figData=None, cpFigPath=None,
+                   altText="default", describe=""):
+        Fig_Save_Path = os.path.join(self.source_dir,Fig_filename)
+        if cpFigPath is None:
+            self._saveFig(figData,Fig_Save_Path)
+        else:
+            self._cpFig(cpFigPath,Fig_Save_Path)
+
+        gram = f"![{altText}]({Fig_Save_Path})"
+        self.add_line(gram)
+        self.add_line(describe)
+        return self
+
+    def _saveFig(self,FigData,FigPath):
+        FigData.savefig(FigPath)
+
+    def _cpFig(self,source_path,determine_Path):
+        with open(source_path, 'rb') as rStream:
+            container = rStream.read()
+            with open(determine_Path, 'wb') as wStream:
+                wStream.write(container)
+
+    def saveMD(self):
+        with open(self.save_path,"w") as F:
+            F.write(self.data)
+        return self.save_path
+
 
 if __name__ == '__main__':
     log = rootlogger('test_for_logger')

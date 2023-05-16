@@ -16,6 +16,8 @@ class BasicTrainer(object):
     device = device
 
     def __init__(self, model, loader_train, loader_test, optimizer, lrScheduler,logName=None, lossFunc=None):
+        self.train_loss = None
+        self.test_loss = None
         if logName is None:
             logName = "default_logger"
             self.log = logging.getLogger(logName)
@@ -103,15 +105,17 @@ class BasicTrainer(object):
             print("\r"+show_str, end="")
             self.log.info(show_str)
             self.epoch_count += 1
+        self.train_loss = train_losses
+        self.test_loss = test_losses
         if show_loss:
-            self.show(train_losses,test_losses)
+            self.show()
         return train_losses, test_losses
 
-    def show(self,train_loss, test_loss):
-        fig = BasicTrainer.drawLossFig(train_loss, test_loss)
+    def show(self):
+        fig = self.drawLossFig()
         fig.show()
-    @staticmethod
-    def drawLossFig(train_loss, test_loss):
+    def drawLossFig(self):
+        train_loss, test_loss = self.train_loss,self.test_loss
         fig = plt.figure()
         train_x = np.array([i for i, j in train_loss.items()])
         train_y = np.array([j for i, j in train_loss.items()])
@@ -123,6 +127,7 @@ class BasicTrainer(object):
         plt.ylabel("Loss")
         plt.legend()
         return fig
+
     def MFAnalyze(self,File_Path):
         Ant_F = self.model.Inference.Ant_Function
         Height = self.model.Defuzzifier.para_height.detach()

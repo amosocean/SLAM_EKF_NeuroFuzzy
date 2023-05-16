@@ -48,7 +48,8 @@ class TotalModel(torch.nn.Module):
 class CustomDataset(CovarianceNoise_Track_Dataset_Generate):
     def __getitem__(self, idx):
         k = idx+self.xWin
-        pure_x = self.pure_track[:,k-1]
+        # pure_x = self.pure_track[:,k-1]
+        pure_x = self.noisy_track[:,k-1]
 
         z_sample = self.noisy_track[:, idx: idx + self.xWin + 1]
         pure_next = self.pure_track[:, k: k + self.yWin]
@@ -111,7 +112,6 @@ if __name__ == '__main__':
 
     model = TotalModel(ModelList=MovementModels)
 
-
     # region 训练模型
     print(model.parameters)
     epoch_num = 10
@@ -131,7 +131,8 @@ if __name__ == '__main__':
     X = X0 = TFK2.get_pure_track()[:,Win]
     zs = TFK2.get_noisy_track()
     for t in range(Win,Simulate_time):
-        X = model(X,zs[:,t-Win:t+1])[0]
+        X_pre = model(X, zs[:,t-Win:t+1])[0]
+        X = X_pre
         Est.append(X)
 
     TensorEst = torch.stack(Est).transpose(0,1)
