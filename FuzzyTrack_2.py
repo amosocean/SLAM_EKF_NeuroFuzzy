@@ -16,6 +16,7 @@ if __name__ == '__main__':
     from utils.logger import rootlogger,MarkdownEditor
     from FuzzyModel.Trainer import MSETrainer
     from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
+    from FuzzyModel.FLS import NormalizePacking
     batch_size = 5000
     time_dim = 15
     snr_db=-25
@@ -69,7 +70,17 @@ if __name__ == '__main__':
                              pin_memory=True)
     # A = Test(tensor_real_data[:time_dim])
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
-    model = AdoptTimeFLSLayer_Dense(9, time_dim, 64, 9, 1).to(device=device)
+    
+    class TestModel(torch.nn.Module):
+        def __init__(self):
+            super(TestModel,self).__init__()
+            self.fuzzy=AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
+            self.NormPack = NormalizePacking(self.forward,time_dim)
+            self.forward = self.NormPack.forward
+        def forward(self,x):
+            return self.fuzzy(x)
+    
+    model = TestModel().to(device=device)
     print(model.parameters)
     epoch_num = 5
     learning_rate = 0.01
