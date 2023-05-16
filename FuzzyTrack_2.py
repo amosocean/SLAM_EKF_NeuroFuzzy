@@ -18,7 +18,7 @@ if __name__ == '__main__':
     from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
     from FuzzyModel.FLS import NormalizePacking
     batch_size = 5000
-    time_dim = 15
+    time_dim = 5
     snr_db=-25
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
@@ -72,15 +72,26 @@ if __name__ == '__main__':
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     
     class TestModel(torch.nn.Module):
-        def __init__(self):
+        def __init__(self,time_dim):
             super(TestModel,self).__init__()
-            self.fuzzy=AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
-            self.NormPack = NormalizePacking(self.forward,time_dim)
+            fuzzy_dim=9
+            self.fuzzy=AdoptTimeFLSLayer(fuzzy_dim, time_dim, 64, 9, 1).to(device=device)
+            self.NormPack = NormalizePacking(self.forward,time_dim,channel_num=9)
             self.forward = self.NormPack.forward
+            self.dense=torch.nn.Sequential(
+            torch.nn.Conv1d(in_channels=9,out_channels=36,kernel_size=1,stride=1,padding=0),
+            torch.nn.BatchNorm1d(36),
+            torch.nn.ReLU(),
+            torch.nn.Conv1d(in_channels=36,out_channels=36,kernel_size=1,stride=1,padding=0),
+            torch.nn.BatchNorm1d(36),
+            torch.nn.ReLU(),
+            torch.nn.Conv1d(in_channels=36,out_channels=9,kernel_size=1,stride=1,padding=0),
+            )
         def forward(self,x):
-            return self.fuzzy(x)
+            x=self.fuzzy(x)
+            return x
     
-    model = TestModel().to(device=device)
+    model = TestModel(time_dim=time_dim).to(device=device)
     print(model.parameters)
     epoch_num = 5
     learning_rate = 0.01
