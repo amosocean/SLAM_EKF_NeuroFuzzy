@@ -11,7 +11,7 @@ from config import getStrTime
 if __name__ == '__main__':
 
     from FuzzyModel.FLS import FormalNorm_layer
-    from FuzzyModel.MyModel import AdoptTimeFLSLayer,AdoptTimeFLSLayer_Dense,PackingAdoptTimeFLSLayer
+    from FuzzyModel.MyModel import AdoptTimeFLSLayer,AdoptTimeFLSLayer_Dense,PackingAdoptTimeFLSLayer,BasicTimeSeriesModel
     import torch
     from torch.utils.data import DataLoader,ConcatDataset
     import torch.optim.lr_scheduler as lr_scheduler
@@ -75,9 +75,9 @@ if __name__ == '__main__':
     # A = Test(tensor_real_data[:time_dim])
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
 
-    class TestModel(torch.nn.Module):
+    class TestModel(BasicTimeSeriesModel):
         def __init__(self,time_dim,rule_num=64):
-            super(TestModel,self).__init__()
+            super(TestModel,self).__init__(xDim=9,xTimeDim=time_dim,rule_num=rule_num,yDim=9,yTimeDim=1)
             fuzzy_dim=9
             self.fuzzy=AdoptTimeFLSLayer(fuzzy_dim, time_dim, rule_num, 9, 1).to(device=device)
             self.NormPack = NormalizePacking(self.forward,time_dim,channel_num=9)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             torch.nn.Conv1d(in_channels=36,out_channels=9,kernel_size=time_dim,stride=1,padding=0),
             )
         def forward(self,x):
-            x=self.dense(x)
+            x=self.fuzzy(x)
             return x
 
     model = TestModel(time_dim=time_dim,rule_num=rule_num).to(device=device)
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
                        lrScheduler=scheduler,logName='Train_FuzzyTrack')
 
-    Train.run(epoch_num, div=5, show_loss=False)
+    Train.run(epoch_num, div=1, show_loss=False)
 
     ME.add_figure("lossPic.png",figData=Train.drawLossFig(),
                   describe="### The loss of last epoch.")
