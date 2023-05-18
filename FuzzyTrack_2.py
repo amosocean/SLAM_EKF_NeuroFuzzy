@@ -17,13 +17,15 @@ if __name__ == '__main__':
     import torch.optim.lr_scheduler as lr_scheduler
     from utils.logger import rootlogger,MarkdownEditor
     from FuzzyModel.Trainer import MSETrainer
-    from utils.Track_Generate import SNRNoise_Track_Dataset_LinerMeasure,CovarianceNoise_Track_Dataset_Generate
+    from utils.Track_Generate import SNRNoise_Track_Dataset_LinerMeasure,CovarianceNoise_Track_Dataset_LinerMeasure
     from FuzzyModel.FLS import NormalizePacking
     batch_size = 5000
-    time_dim = 5
-    snr_db=-25
+    time_dim = 50
+    rule_num = 64
+    snr_db = 0
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Simulate_time = 500
+    dt = 0.1
     
     Train_Dataset_List=[]
     for x in range(20):
@@ -74,10 +76,10 @@ if __name__ == '__main__':
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
 
     class TestModel(torch.nn.Module):
-        def __init__(self,time_dim):
+        def __init__(self,time_dim,rule_num=64):
             super(TestModel,self).__init__()
             fuzzy_dim=9
-            self.fuzzy=AdoptTimeFLSLayer(fuzzy_dim, time_dim, 64, 9, 1).to(device=device)
+            self.fuzzy=AdoptTimeFLSLayer(fuzzy_dim, time_dim, rule_num, 9, 1).to(device=device)
             self.NormPack = NormalizePacking(self.forward,time_dim,channel_num=9)
             self.forward = self.NormPack.forward
             self.dense=torch.nn.Sequential(
@@ -93,7 +95,7 @@ if __name__ == '__main__':
             x=self.fuzzy(x)
             return x
 
-    model = TestModel(time_dim=time_dim).to(device=device)
+    model = TestModel(time_dim=time_dim,rule_num=rule_num).to(device=device)
     print(model.parameters)
     epoch_num = 5
     learning_rate = 0.01
@@ -133,7 +135,7 @@ if __name__ == '__main__':
     data_draw2 = np.array(Test_Dataset_List[0].get_measure()[[0, 3, 6]].detach().cpu())
     #data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw4 = np.array(Fuzzy_Est_tensor[:,[0, 3, 6]].T.detach().cpu())
-    fig = plt.figure()
+    fig = plt.figure(figsize=[16,12])
     ax = plt.axes(projection='3d')
 
     def draw_3D(Ax, data_draw, label):
@@ -141,14 +143,43 @@ if __name__ == '__main__':
 
 
     # 三维线的数据
-    draw_3D(ax,data_draw1,"real")
     draw_3D(ax,data_draw2,"Measure(Noisy)")
     #draw_3D(ax, data_draw3, "real2")
     draw_3D(ax, data_draw4, "FuzzyEst")
+    draw_3D(ax,data_draw1,"real")
 
     plt.legend()
     ME.add_figure("1.png",fig)
     plt.show()
+
+    fig2 = plt.figure()
+    data_draw_1 = data_draw1
+    data_draw_3 = data_draw4
+    data_draw_2 = data_draw2
+    Win = time_dim
+    x = torch.arange(Simulate_time)*dt
+    plt.subplot(2,2,1)
+    plt.plot(x, data_draw_2[0],label="Measure")
+    plt.plot(x[Win:], data_draw_3[ 0],label="Est")
+    plt.plot(x, data_draw_1[0], label="True")
+    plt.legend()
+
+    plt.subplot(2,2,2)
+    plt.plot(x, data_draw_2[1],label="Measure")
+    plt.plot(x[Win:], data_draw_3[ 1],label="Est")
+    plt.plot(x, data_draw_1[1], label="True")
+    plt.legend()
+
+    plt.subplot(2,2,3)
+    plt.plot(x, data_draw_2[2],label="Measure")
+    plt.plot(x[Win:], data_draw_3[ 2],label="Est")
+    plt.plot(x, data_draw_1[2], label="True")
+    plt.legend()
+    ME.add_figure("2.png",fig)
+
+    plt.show()
+
+
     # endregion
 
     ME.saveMD()

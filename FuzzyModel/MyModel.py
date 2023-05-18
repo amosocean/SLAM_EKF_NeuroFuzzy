@@ -140,7 +140,7 @@ class AdoptTimeFLSLayer(BasicTimeSeriesModel):
         super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
         self.FLS_List=torch.nn.ModuleList()
         for i in range(xDim):
-            self.FLS_List.append(FLSLayer(xTimeDim,rule_num))
+            self.FLS_List.append(StrictlyTrapFLSLayer(xTimeDim,rule_num))
 
     def forward(self,x):
         xs = torch.split(x,1,dim=-2)

@@ -55,6 +55,8 @@ class GaussianFunction(BasicFunction):
 
     def __init__(self, input_shape, mean=None, sigma=None, FixedSigma=False, FixedMean=False):
         super().__init__(input_shape, Mean=mean, Sigma=sigma, FixedSigma=FixedSigma, FixedMean=FixedMean)
+        # sigma = (1+torch.rand(input_shape, device=device))/2 if sigma is None else sigma
+        # self.para_sigma = sigma if FixedSigma else torch.nn.Parameter(sigma)
 
     def forward(self, x):
         return torch.exp(-(x - self.para_Mean) ** 2 / (2 * self.para_Sigma ** 2))
