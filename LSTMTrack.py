@@ -29,7 +29,7 @@ if __name__ == '__main__':
         dataset.gen_randomTrack(X0)
         # endregion
         #### 数据集加入噪声
-        dataset=dataset.add_noise(snr=snr_db)
+        dataset=dataset.add_noise(snr=snr_db).normalize()
         ####
         Train_Dataset_List.append(dataset)
     
@@ -41,7 +41,7 @@ if __name__ == '__main__':
         dataset.gen_randomTrack(X1)
         # endregion
         #### 数据集加入噪声
-        dataset=dataset.add_noise(snr=snr_db)
+        dataset=dataset.add_noise(snr=snr_db).normalize()
         ####
         Test_Dataset_List.append(dataset)
     
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     #model = AdoptTimeFLSLayer(9, time_dim, 64, 9, 1).to(device=device)
     model = LSTMNet(xDim=9, xTimeDim=time_dim,num_layers=1, hidden_size=64, yDim=9, yTimeDim=1).to(device=device)
     print(model.parameters)
-    epoch_num = 20
+    epoch_num = 5
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50,200], gamma=0.5)

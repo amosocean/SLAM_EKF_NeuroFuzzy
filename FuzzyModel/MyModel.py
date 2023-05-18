@@ -138,22 +138,17 @@ class TwoHalfTrapFLSLayer(BasicOneStepModel):
 class AdoptTimeFLSLayer(BasicTimeSeriesModel):
     def __init__(self,xDim,xTimeDim,rule_num,yDim=1,yTimeDim=1):
         super().__init__(xDim,xTimeDim,rule_num,yDim,yTimeDim)
-        self.Norm = FixNorm_layer(xTimeDim)
-        # self.AlterNorm = Norm_layer(yTimeDim)
         self.FLS_List=torch.nn.ModuleList()
         for i in range(xDim):
             self.FLS_List.append(FLSLayer(xTimeDim,rule_num))
 
     def forward(self,x):
-        x_norm, mean,var = self.Norm(x)
-        # var, mean = (torch.var_mean(x, dim=-1))
-        xs = torch.split(x_norm,1,dim=-2)
+        xs = torch.split(x,1,dim=-2)
         ys = []
         for i in range(self.xDim):
             ys.append(self.FLS_List[i](xs[i].squeeze(-2)))
         rtn = torch.stack(ys,dim=-2)
-
-        return rtn * var + mean
+        return rtn
 
 class PackingAdoptTimeFLSLayer(BasicTimeSeriesModel):
     def __init__(self,xDim,xTimeDim,rule_num,yDim=1,yTimeDim=1):
@@ -198,15 +193,14 @@ class AdoptTimeFLSLayer_Dense(BasicTimeSeriesModel):
             )
 
     def forward(self,x):
-        x_norm, mean,var = self.Norm(x)
         # var, mean = (torch.var_mean(x, dim=-1))
-        xs = torch.split(x_norm,1,dim=-2)
+        xs = torch.split(x,1,dim=-2)
         ys = []
         for i in range(self.xDim):
             ys.append(self.FLS_List[i](xs[i].squeeze(-2)))
         rtn = torch.stack(ys,dim=-2)
         rtn = self.dense2(rtn)
-        return rtn * var + mean
+        return rtn
 
 class Dense_AdoptTimeFLSLayer(BasicTimeSeriesModel):
     def __init__(self,xDim,xTimeDim,rule_num,yDim=1,yTimeDim=1):
@@ -258,7 +252,7 @@ class LSTMNet(BasicLSTMNet):
     def __init__(self, xDim,xTimeDim,hidden_size,num_layers=1,yDim=1,yTimeDim=1):#yTimeDim=1 是out = self.fc(out[:, -1, :])决定的，还没有完成动态设计
         assert yTimeDim==1,"还不支持不是 yTimeDim==1的情况"
         super(LSTMNet,self).__init__(input_size=xDim, hidden_size=hidden_size, num_layers=num_layers, output_size=yDim)
-        self.NormPack = NormalizePacking(self.forward,xTimeDim)
+        self.NormPack = NormalizePacking(self.forward,xTimeDim,channel_num=9)
         self.forward = self.NormPack.forward
 
 

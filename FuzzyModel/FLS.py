@@ -170,21 +170,21 @@ class FixNorm_layer(torch.nn.Module):
 
 
 class NormalizePacking(BasicPacking):
-    def __init__(self, forward, shape,eps=1e-7):
+    def __init__(self, forward, shape,channel_num,eps=1e-7):
         super().__init__(forward)
         self.eps=eps
-        self.Gama = torch.nn.Parameter(torch.ones(shape, device=device))
-        self.Beta = torch.nn.Parameter(torch.zeros(shape, device=device))
-        self.Norm1=torch.nn.LayerNorm(normalized_shape=shape)
+        self.Gama = torch.nn.Parameter(torch.rand(channel_num,shape, device=device))
+        self.Beta = torch.nn.Parameter(torch.rand(channel_num,shape, device=device))
+        self.expand = torch.ones((1,5)).to(device)
     def __call__(self, x):
         self.forward(x)
 
     def forward(self, x):
-        var, mean = (torch.var_mean(x, dim=-1,keepdim=True))
-        #x = ((x - mean) / torch.sqrt(var + self.eps)) * self.Gama + self.Beta
-        rtn=self.Norm1(x)
+        var, mean = (torch.var_mean(x, dim=-1,keepdim=True)) #x 按照 Batch,channel,length排列，对每个time(length)维度归一化
+        x = ((x - mean) / torch.sqrt(var + self.eps)) * self.Gama + self.Beta
         rtn = super().__call__(x)
-        return rtn * var + mean
+        rtn=rtn*var+mean
+        return rtn
 
 
 if __name__ == '__main__':
