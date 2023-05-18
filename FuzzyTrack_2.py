@@ -17,7 +17,7 @@ if __name__ == '__main__':
     import torch.optim.lr_scheduler as lr_scheduler
     from utils.logger import rootlogger,MarkdownEditor
     from FuzzyModel.Trainer import MSETrainer
-    from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
+    from utils.Track_Generate import SNRNoise_Track_Dataset_LinerMeasure,CovarianceNoise_Track_Dataset_Generate
     from FuzzyModel.FLS import NormalizePacking
     batch_size = 5000
     time_dim = 5
