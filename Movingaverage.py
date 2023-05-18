@@ -19,6 +19,7 @@ if __name__ == '__main__':
     from FuzzyModel.Trainer import MSETrainer
     from utils.Track_Generate import SNRNoise_Track_Dataset_LinerMeasure,CovarianceNoise_Track_Dataset_LinerMeasure
     from FuzzyModel.FLS import NormalizePacking
+    import torch.nn.functional as F
     batch_size = 5000
     time_dim = 50
     rule_num = 64
@@ -86,31 +87,31 @@ if __name__ == '__main__':
             torch.nn.Conv1d(in_channels=9,out_channels=36,kernel_size=1,stride=1,padding=0),
             torch.nn.BatchNorm1d(36),
             torch.nn.ReLU(),
-            torch.nn.Dropout(),
             torch.nn.Conv1d(in_channels=36,out_channels=36,kernel_size=1,stride=1,padding=0),
             torch.nn.BatchNorm1d(36),
             torch.nn.ReLU(),
-            torch.nn.Dropout(),
             torch.nn.Conv1d(in_channels=36,out_channels=9,kernel_size=time_dim,stride=1,padding=0),
             )
         def forward(self,x):
-            x=self.dense(x)
+            x=torch.sum(x,dim=-1,keepdim=True)/(x.shape[-1]) #滑动平均
+
+            #x,_=torch.median(x,dim=-1,keepdim=True)
             return x
 
     model = TestModel(time_dim=time_dim,rule_num=rule_num).to(device=device)
-    print(model.parameters)
-    epoch_num = 2
-    learning_rate = 0.01
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
-    ME = MarkdownEditor().init_By_logger(rootlogger('Train_FuzzyTrack'))
-    Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
-                       lrScheduler=scheduler,logName='Train_FuzzyTrack')
+    # print(model.parameters)
+    # epoch_num = 2
+    # learning_rate = 0.001
+    # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
+    #ME = MarkdownEditor().init_By_logger(rootlogger('Train_FuzzyTrack'))
+    #Train = MSETrainer(model=model, loader_train=train_loader, loader_test=test_loader, optimizer=optimizer,
+                       #lrScheduler=scheduler,logName='Train_FuzzyTrack')
 
-    Train.run(epoch_num, div=5, show_loss=False)
+    # Train.run(epoch_num, div=5, show_loss=False)
 
-    ME.add_figure("lossPic.png",figData=Train.drawLossFig(),
-                  describe="### The loss of last epoch.")
+    #ME.add_figure("lossPic.png",figData=Train.drawLossFig(),
+                  #describe="### The loss of last epoch.")
 
     test_loader = DataLoader(dataset=Test_Dataset_List[0],
                                 batch_size=1,
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     draw_3D(ax,data_draw1,"real")
 
     plt.legend()
-    ME.add_figure("1.png",fig)
+    #ME.add_figure("1.png",fig)
     plt.show()
 
     fig2 = plt.figure()
@@ -177,17 +178,17 @@ if __name__ == '__main__':
     plt.plot(x[Win-25:-25], data_draw_3[ 2],label="Est")
     plt.plot(x, data_draw_1[2], label="True")
     plt.legend()
-    ME.add_figure("2.png",fig)
+    #ME.add_figure("2.png",fig)
 
     plt.show()
 
 
     # endregion
 
-    ME.saveMD()
-    if input("\n[!]是否保存模型？[y/n]") == "y":
-        savePath = Train.ModelSave(ME.log_StartTime)
-        print(f"Saved to {savePath} ...")
-        ME.add_line("Model have saved to {savePath} ...")
+    # ME.saveMD()
+    # if input("\n[!]是否保存模型？[y/n]") == "y":
+    #     savePath = Train.ModelSave(ME.log_StartTime)
+    #     print(f"Saved to {savePath} ...")
+    #     ME.add_line("Model have saved to {savePath} ...")
 
-        model2 = MSETrainer.LoadModelByJson(savePath)
+    #     model2 = MSETrainer.LoadModelByJson(savePath)
