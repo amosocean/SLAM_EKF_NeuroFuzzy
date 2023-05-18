@@ -86,18 +86,20 @@ if __name__ == '__main__':
             torch.nn.Conv1d(in_channels=9,out_channels=36,kernel_size=1,stride=1,padding=0),
             torch.nn.BatchNorm1d(36),
             torch.nn.ReLU(),
+            torch.nn.Dropout(),
             torch.nn.Conv1d(in_channels=36,out_channels=36,kernel_size=1,stride=1,padding=0),
             torch.nn.BatchNorm1d(36),
             torch.nn.ReLU(),
-            torch.nn.Conv1d(in_channels=36,out_channels=9,kernel_size=1,stride=1,padding=0),
+            torch.nn.Dropout(),
+            torch.nn.Conv1d(in_channels=36,out_channels=9,kernel_size=time_dim,stride=1,padding=0),
             )
         def forward(self,x):
-            x=self.fuzzy(x)
+            x=self.dense(x)
             return x
 
     model = TestModel(time_dim=time_dim,rule_num=rule_num).to(device=device)
     print(model.parameters)
-    epoch_num = 5
+    epoch_num = 2
     learning_rate = 0.01
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[20,50], gamma=0.5)
@@ -160,19 +162,19 @@ if __name__ == '__main__':
     x = torch.arange(Simulate_time)*dt
     plt.subplot(2,2,1)
     plt.plot(x, data_draw_2[0],label="Measure")
-    plt.plot(x[Win:], data_draw_3[ 0],label="Est")
+    plt.plot(x[Win-25:-25], data_draw_3[ 0],label="Est")
     plt.plot(x, data_draw_1[0], label="True")
     plt.legend()
 
     plt.subplot(2,2,2)
     plt.plot(x, data_draw_2[1],label="Measure")
-    plt.plot(x[Win:], data_draw_3[ 1],label="Est")
+    plt.plot(x[Win-25:-25], data_draw_3[ 1],label="Est")
     plt.plot(x, data_draw_1[1], label="True")
     plt.legend()
 
     plt.subplot(2,2,3)
     plt.plot(x, data_draw_2[2],label="Measure")
-    plt.plot(x[Win:], data_draw_3[ 2],label="Est")
+    plt.plot(x[Win-25:-25], data_draw_3[ 2],label="Est")
     plt.plot(x, data_draw_1[2], label="True")
     plt.legend()
     ME.add_figure("2.png",fig)
