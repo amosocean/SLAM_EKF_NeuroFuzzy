@@ -24,31 +24,30 @@ class BasicModel(torch.nn.Module):
             dict.update(dict.pop(keyword))
             self._unfold(dict, keyword)
 
-    def quick_eval(self,*args):
-        return self(torch.tensor(args,device=device))
-    def forward(self,x):
-        return x
     def get_init_para(self):
         for key in self.para_dict.keys():
             self.para_dict[key] = self.__getattribute__(key)
         return self.para_dict
+
     def _init_para_update(self,**kwargs):
         self.para_dict.update(kwargs)
 
+    def quick_eval(self,*args):
+        return self(torch.tensor(args,device=device))
+
+    def forward(self,x):
+        return x
+
 class BasicOneStepModel(BasicModel):
     def __init__(self,xDim,rule_num,yDim=1,**kwargs):
-        super().__init__(kwargs=dict(locals(),**kwargs))
+        super().__init__(kwargs=dict(locals(), **kwargs))
         self.xDim = xDim
         self.rule_num = rule_num
         self.yDim = yDim
-    # def quick_eval(self,*args):
-    #     return self(torch.tensor(args,device=device))
-    # def forward(self,x):
-    #     return x
 
 class BasicTimeSeriesModel(BasicModel):
     def __init__(self, xDim,xTimeDim,rule_num,yDim,yTimeDim,**kwargs):
-        super().__init__(kwargs=dict(locals(),**kwargs))
+        super().__init__(kwargs=dict(locals(), **kwargs))
         self.xDim = xDim
         self.xTimeDim=xTimeDim
         self.rule_num=rule_num

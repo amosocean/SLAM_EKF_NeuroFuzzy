@@ -4,7 +4,7 @@
 # @Time      :2023/5/12 8:24 PM
 # @Author    :Oliver
 from PyRadarTrack.Model.TorchMovementModel import TorchMovementModelFactory
-from utils.Track_Generate import CovarianceNoise_Track_Dataset_Generate
+from utils.Track_Generate import CovarianceNoise_Track_Dataset_LinerMeasure
 import torch
 
 compress_weight = torch.ones([1,1,9])/9
@@ -31,10 +31,10 @@ if __name__ == '__main__':
     CAModel = TchMMF.create('CAModel')(dt, Sigma)
     MovementModels = [CAModel, CTModel, CVModel]
 
-    TK_Cv = CovarianceNoise_Track_Dataset_Generate(Simulate_time,seed=600,xWin=Win,UsedModel=["CV"])
-    TK_CT = CovarianceNoise_Track_Dataset_Generate(Simulate_time,seed=600,xWin=Win,UsedModel=["CT"])
-    TK_CA = CovarianceNoise_Track_Dataset_Generate(Simulate_time,seed=600,xWin=Win,UsedModel=["CA"])
-    TK_Mix = CovarianceNoise_Track_Dataset_Generate(Simulate_time,seed=600,xWin=Win)
+    TK_Cv = CovarianceNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=600, xWin=Win, UsedModel=["CV"])
+    TK_CT = CovarianceNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=600, xWin=Win, UsedModel=["CT"])
+    TK_CA = CovarianceNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=600, xWin=Win, UsedModel=["CA"])
+    TK_Mix = CovarianceNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=600, xWin=Win)
     z = TK_Cv[0][0].T
     rtn = MatchScore([CVModel,CAModel,CTModel],z)
 
@@ -67,10 +67,10 @@ if __name__ == '__main__':
         Ax.plot3D(*data_draw, label=label)
 
 
-    data_draw_1 = np.array(TK_Cv.get_noisy_track()[[0, 3, 6]].detach())
-    data_draw_2 = np.array(TK_CA.get_noisy_track()[[0, 3, 6]].detach())
-    data_draw_3 = np.array(TK_CT.get_noisy_track()[[0, 3, 6]].detach())
-    data_draw_4 = np.array(TK_Mix.get_noisy_track()[[0, 3, 6]].detach())
+    data_draw_1 = np.array(TK_Cv.get_measure()[[0, 3, 6]].detach())
+    data_draw_2 = np.array(TK_CA.get_measure()[[0, 3, 6]].detach())
+    data_draw_3 = np.array(TK_CT.get_measure()[[0, 3, 6]].detach())
+    data_draw_4 = np.array(TK_Mix.get_measure()[[0, 3, 6]].detach())
     # data_draw_2 = np.array(TFK2.get_noisy_track()[[0, 3, 6]].detach())
     # data_draw_3 = np.array(SW.Est[[0, 3, 6]].detach())
     draw_3D(ax, data_draw_1, "CV")

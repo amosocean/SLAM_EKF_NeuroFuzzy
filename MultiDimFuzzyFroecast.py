@@ -5,7 +5,7 @@
 # @Author    :Oliver
 
 from torch.utils.data import DataLoader
-from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
+from utils.Track_Generate import SNRNoise_Track_Dataset_LinerMeasure,CovarianceNoise_Track_Dataset_LinerMeasure
 from PyRadarTrack.Model.TorchMovementModel import TorchMovementModelFactory
 from FuzzyModel.MyModel import *
 from FuzzyModel.Trainer import MSETrainer
@@ -31,8 +31,8 @@ if __name__ == '__main__':
     # PP = PhysicalPred(MovementModels)
     # model = ClassifyFLS(PP,rule_num=64,TimeWin=Win).to(device=device)
     rootlogger('Train_NextStepModel')
-    TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
-    TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
+    TFK1 = SNRNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=None, xWin=Win)
+    TFK2 = SNRNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=None, xWin=Win)
 
 
     train_loader = DataLoader(dataset=TFK1,

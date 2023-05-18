@@ -45,7 +45,7 @@ class TotalModel(torch.nn.Module):
         return torch.sum(x_now_pre*matchScore,dim=-3)
 
 
-class CustomDataset(CovarianceNoise_Track_Dataset_Generate):
+class CustomDataset(CovarianceNoise_Track_Dataset_LinerMeasure):
     def __getitem__(self, idx):
         k = idx+self.xWin
         # pure_x = self.pure_track[:,k-1]
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     # region 仿真
     Est=[]
     X = X0 = TFK2.get_pure_track()[:,Win]
-    zs = TFK2.get_noisy_track()
+    zs = TFK2.get_measure()
     for t in range(Win,Simulate_time):
         X_pre = model(X, zs[:,t-Win:t+1])[0]
         X = X_pre
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         Ax.plot3D(*data_draw, label=label)
 
     data_draw_1 = np.array(TFK2.get_pure_track()[[0,3,6]].detach())
-    data_draw_2 = np.array(TFK2.get_noisy_track()[[0,3,6]].detach())
+    data_draw_2 = np.array(TFK2.get_measure()[[0, 3, 6]].detach())
     data_draw_3 = np.array(TensorEst[[0,3,6]].detach())
     draw_3D(ax,data_draw_1,"True")
     draw_3D(ax,data_draw_2,"Measure")

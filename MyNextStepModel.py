@@ -6,7 +6,7 @@
 import torch
 
 from torch.utils.data import DataLoader
-from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
+from utils.Track_Generate import SNRNoise_Track_Dataset_LinerMeasure,CovarianceNoise_Track_Dataset_LinerMeasure
 from PyRadarTrack.Model.TorchMovementModel import TorchMovementModelFactory
 from FuzzyModel.MyModel import *
 from FuzzyModel.Trainer import MSETrainer
@@ -105,8 +105,8 @@ if __name__ == '__main__':
     # TFK2 = Random_Track_Dataset_Generate(Simulate_time, seed=None)
     # TFK1 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
     # TFK2 = SNRNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
-    TFK1 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
-    TFK2 = CovarianceNoise_Track_Dataset_Generate(Simulate_time, seed=None, xWin=Win)
+    TFK1 = CovarianceNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=None, xWin=Win)
+    TFK2 = CovarianceNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=None, xWin=Win)
     # X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
     # X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
     #
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     # region 效果展示
     SW = SlidingWindow(model)
     Est = None
-    for b in TFK2.get_noisy_track().T:
+    for b in TFK2.get_measure().T:
         if Est is not None:
             loss = torch.nn.functional.mse_loss(Est, b.unsqueeze(-1))
             # print(loss)
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         Ax.plot3D(*data_draw, label=label)
 
     data_draw_1 = np.array(TFK2.get_pure_track()[[0,3,6]].detach())
-    data_draw_2 = np.array(TFK2.get_noisy_track()[[0,3,6]].detach())
+    data_draw_2 = np.array(TFK2.get_measure()[[0, 3, 6]].detach())
     data_draw_3 = np.array(SW.Est[[0,3,6]].detach())
     draw_3D(ax,data_draw_1,"True")
     draw_3D(ax,data_draw_2,"Measure")

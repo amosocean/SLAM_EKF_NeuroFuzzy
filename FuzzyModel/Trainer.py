@@ -12,6 +12,7 @@ import numpy as np
 import gif,os,json
 from config import *
 from FuzzyModel.MyModel import *
+
 class BasicTrainer(object):
     device = device
 

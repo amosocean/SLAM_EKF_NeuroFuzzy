@@ -3,7 +3,7 @@
 # @FileName  :__init__.py.py
 # @Time      :2023/4/19 3:23 PM
 # @Author    :Kinddle
-from .Trainer import BasicTrainer,RMSETrainer,MSETrainer
+from .Trainer import *
 from .MyModel import *
 from .config import *
 # from config import device

@@ -23,10 +23,10 @@ Slope_Core_dict = {
 class BasicFunction(torch.nn.Module):
     def __init__(self, input_shape, **kwargs):
         """
-        kwargs =  { P_a:[...], (FixedPa:True/False),
-                    P_b:[...], (FixedPb:True/False),...}
+        kwargs =  { P_a:[...], (FixedP_a:True/False),
+                    P_b:[...], (FixedP_b:True/False),...}
         ! set attribute
-            self.para_Pa = [...] if FixedPa else torch.nn.Parameter([...])
+            self.para_P_a = [...] if FixedP_a else torch.nn.Parameter([...])
         notice:
             when value of Pk is None, replace it with torch.rand(input_shape)
             default FixedPk is False
@@ -94,8 +94,9 @@ class HalfTrap(BasicFunction):
 
 class StrictlyTrapFunction(BasicFunction):
     def __init__(self, input_shape, center, slope_up, topPlat_len,  slope_down,
-                 Slope_Core="Tanh"):
-        super().__init__(input_shape,center=center,slope_up=slope_up,topPlat_len=topPlat_len,slope_down=slope_down)
+                 Slope_Core="Tanh" ,**kwargs):
+        super().__init__(input_shape, center=center, slope_up=slope_up, topPlat_len=topPlat_len, slope_down=slope_down,
+                         **kwargs)
         self.Core = Slope_Core_dict[Slope_Core]
 
     def forward(self, x):

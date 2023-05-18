@@ -17,7 +17,7 @@ if __name__ == '__main__':
     import torch.optim.lr_scheduler as lr_scheduler
     from utils.logger import rootlogger,MarkdownEditor
     from FuzzyModel.Trainer import MSETrainer
-    from utils.Track_Generate import SNRNoise_Track_Dataset_Generate,CovarianceNoise_Track_Dataset_Generate
+    from utils.Track_Generate import SNRNoise_Track_Dataset_LinerMeasure,CovarianceNoise_Track_Dataset_LinerMeasure
     batch_size = 5000
     time_dim = 15
     snr_db=-25
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     
     Train_Dataset_List=[]
     for x in range(20):
-        dataset=SNRNoise_Track_Dataset_Generate(Simulate_time,seed=x,xWin=time_dim)
+        dataset=SNRNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=x, xWin=time_dim)
         # region 规划初始点和初始速度
         X0 = np.array([3300, 2, 1e-3, 3400, 3, 3e-3, 3500, 4, 4e-4])
         dataset.gen_randomTrack(X0)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     
     Test_Dataset_List=[]
     for x in range(667,677):
-        dataset=SNRNoise_Track_Dataset_Generate(Simulate_time,seed=x,xWin=time_dim)
+        dataset=SNRNoise_Track_Dataset_LinerMeasure(Simulate_time, seed=x, xWin=time_dim)
         # region 规划初始点和初始速度
         X1 = np.array([3300, -2, -1e-3, 3400, -3, -3e-3, 3500, -4, -4e-4])
         dataset.gen_randomTrack(X1)
@@ -107,8 +107,8 @@ if __name__ == '__main__':
     import numpy as np
 
 
-    data_draw1 = np.array(test_loader.dataset.get_pure_track()[[0, 3, 6]].detach().cpu())
-    data_draw2 = np.array(test_loader.dataset.get_noisy_track()[[0, 3, 6]].detach().cpu())
+    data_draw1 = np.array(Test_Dataset_List[0].get_pure_track()[[0, 3, 6]].detach().cpu())
+    data_draw2 = np.array(Test_Dataset_List[0].get_measure()[[0, 3, 6]].detach().cpu())
     #data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw4 = np.array(Fuzzy_Est_tensor[:,[0, 3, 6]].T.detach().cpu())
     fig = plt.figure()
@@ -133,5 +133,6 @@ if __name__ == '__main__':
     if input("\n[!]是否保存模型？[y/n]") == "y":
         savePath = Train.ModelSave(ME.log_StartTime)
         print(f"Saved to {savePath} ...")
+        ME.add_line("Model have saved to {savePath} ...")
 
-    # model = MSETrainer.LoadModelByJson(savePath)
+        model2 = MSETrainer.LoadModelByJson(savePath)
