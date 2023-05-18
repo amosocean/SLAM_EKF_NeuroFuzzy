@@ -235,7 +235,7 @@ class BasicLSTMNet(nn.Module):
         self.num_layers = num_layers
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, output_size)
-        self.act1=nn.LeakyReLU()
+        self.act1=nn.Tanh()
     def forward(self, x):
         x=x.permute(0, 2, 1)#调整为(N,Length,Input_channel)顺序
         # 初始化 LSTM 隐藏状态
