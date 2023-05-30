@@ -113,7 +113,8 @@ if __name__ == '__main__':
     ME.add_figure("lossPic.png",figData=Train.drawLossFig(),
                   describe="### The loss of last epoch.")
 
-    test_loader = DataLoader(dataset=Test_Dataset_List[0],
+    Test_Dataset=Test_Dataset_List[0]
+    test_loader = DataLoader(dataset=Test_Dataset,
                                 batch_size=1,
                                 shuffle=False,
                                 num_workers=0,
@@ -134,8 +135,8 @@ if __name__ == '__main__':
     import numpy as np
 
 
-    data_draw1 = np.array(Test_Dataset_List[0].get_pure_track()[[0, 3, 6]].detach().cpu())
-    data_draw2 = np.array(Test_Dataset_List[0].get_measure()[[0, 3, 6]].detach().cpu())
+    data_draw1 = np.array(Test_Dataset.get_pure_track()[[0, 3, 6]].detach().cpu())
+    data_draw2 = np.array(Test_Dataset.get_measure()[[0, 3, 6]].detach().cpu())
     #data_draw3 = TFK2.Track.get_real_data_all().iloc[:Simulate_time, [0, 3, 6]].to_numpy()
     data_draw4 = np.array(Fuzzy_Est_tensor[:,[0, 3, 6]].T.detach().cpu())
     fig = plt.figure(figsize=[16,12])
